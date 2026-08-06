@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="BIST Hisse Takip Paneli — ROE/ROIC/WACC ısı haritası ve KAP bildirim analizi">
+  <title>BIST Tracker — Finansal Analiz & KAP Takip</title>
+  <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-brand">
+    <div class="header-logo">📊</div>
+    <div>
+      <div class="header-title">BIST Tracker</div>
+      <div class="header-subtitle">Finansal Analiz & KAP Bildirimleri</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span id="live-clock">--:--:-- — --- --</span>
+    <button class="btn-secondary" id="btn-manage-stocks">⚙️ Hisseler</button>
+    <button class="btn-primary" id="btn-manual-scan">🔄 Manuel Tara</button>
+  </div>
+</header>
+
+<!-- Alert banner (yeni bildirim geldiğinde) -->
+<div id="new-alert-banner">🔔 Yeni bildirim!</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     APP LAYOUT
+═══════════════════════════════════════════════════════ -->
+<div class="app-layout">
+
+  <!-- ─── SIDEBAR ─── -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Paneller</div>
+      <button class="tab-btn active" data-tab="kap">
+        <span class="tab-icon">📋</span>
+        KAP Bildirimleri
+      </button>
+      <button class="tab-btn" data-tab="heatmap">
+        <span class="tab-icon">🔥</span>
+        Finansal Isı Haritası
+      </button>
+      <button class="tab-btn" data-tab="settings">
+        <span class="tab-icon">⚙️</span>
+        Ayarlar
+      </button>
+    </div>
+
+    <!-- Scheduler status -->
+    <div class="sidebar-scheduler">
+      <h4>📡 Otomatik Tarama</h4>
+      <div id="scheduler-status">Yükleniyor…</div>
+    </div>
+  </aside>
+
+  <!-- ─── MAIN CONTENT ─── -->
+  <main class="main-content">
+
+    <!-- ════════════════════════════════════════
+         TAB: KAP BİLDİRİMLERİ
+    ════════════════════════════════════════ -->
+    <div id="panel-kap" class="tab-panel active">
+
+      <div class="panel-header">
+        <div>
+          <h1 class="panel-title">KAP Bildirimleri</h1>
+          <div class="panel-subtitle">
+            Faaliyet raporları, sözleşmeler, sermaye artırımı, CapEx ve daha fazlası
+          </div>
+        </div>
+        <div class="kap-toolbar">
+          <span class="scan-progress-text" id="scan-progress-text"></span>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stat-row" id="kap-stats">
+        <div class="stat-badge">
+          <div class="stat-badge-label">Toplam Bildirim</div>
+          <div class="stat-badge-val" id="stat-total">—</div>
+        </div>
+        <div class="stat-badge">
+          <div class="stat-badge-label">🟢 Pozitif</div>
+          <div class="stat-badge-val" id="stat-pos" style="color:var(--pos)">—</div>
+        </div>
+        <div class="stat-badge">
+          <div class="stat-badge-label">🔴 Negatif</div>
+          <div class="stat-badge-val" id="stat-neg" style="color:var(--neg)">—</div>
+        </div>
+        <div class="stat-badge">
+          <div class="stat-badge-label">Yüksek Etki (≥7)</div>
+          <div class="stat-badge-val" id="stat-high" style="color:var(--neu)">—</div>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div id="filter-container"></div>
+
+      <!-- Cards -->
+      <div id="kap-cards">
+        <div class="empty-state">
+          <div class="empty-icon">🔄</div>
+          <p>Yükleniyor…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         TAB: FİNANSAL ISI HARİTASI
+    ════════════════════════════════════════ -->
+    <div id="panel-heatmap" class="tab-panel">
+
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Finansal Isı Haritası</h2>
+          <div class="panel-subtitle">
+            Son 20 çeyrek ROE / ROIC / WACC / EVA — KAP finansal tablolarından hesaplanmıştır
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn-secondary" id="btn-fetch-financials">📊 Finansal Verileri Güncelle</button>
+        </div>
+      </div>
+
+      <!-- Formül bilgisi -->
+      <div class="section-card" style="margin-bottom:16px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">ROE</div>
+            <div style="font-family:var(--mono);font-size:12px;color:var(--text-b);">Net Kâr (TTM yıll.) / Ort. Özkaynak</div>
+            <div style="font-size:11px;color:var(--text-s);margin-top:4px;">Özkaynak getirisi — yatırımcı bakışı</div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">ROIC</div>
+            <div style="font-family:var(--mono);font-size:12px;color:var(--text-b);">NOPAT (yıll.) / (Özkaynak + Net Borç)</div>
+            <div style="font-size:11px;color:var(--text-s);margin-top:4px;">NOPAT = EBIT × (1 − Efektif Vergi Oranı)</div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">WACC</div>
+            <div style="font-family:var(--mono);font-size:12px;color:var(--text-b);">E/V×Ke + D/V×Kd×(1−T)</div>
+            <div style="font-size:11px;color:var(--text-s);margin-top:4px;">Ke = Rf + β×MRP | Rf = TR 10Y tahvil</div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">EVA</div>
+            <div style="font-family:var(--mono);font-size:12px;color:var(--text-b);">NOPAT − WACC × Yatırılan Sermaye</div>
+            <div style="font-size:11px;color:var(--text-s);margin-top:4px;">Pozitif EVA = değer yaratma</div>
+          </div>
+        </div>
+
+        <!-- WACC bileşenleri -->
+        <div class="divider"></div>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:12px;color:var(--text-m);">
+          <span>📌 <b style="color:var(--text-b)">Rf</b> (Risksiz Faiz): <span id="rf-display" style="font-family:var(--mono);">~30% (TR 10Y)</span></span>
+          <span>📌 <b style="color:var(--text-b)">MRP</b> (Piyasa Risk Primi): <span style="font-family:var(--mono);">5.5%</span></span>
+          <span>📌 <b style="color:var(--text-b)">T</b> (Kurumlar Vergisi): <span style="font-family:var(--mono);">22%</span></span>
+          <span>📌 Beta: Sektöre göre (0.75–1.30)</span>
+        </div>
+      </div>
+
+      <!-- Metric selector -->
+      <div class="metric-selector" style="margin-bottom:16px;">
+        <button class="metric-btn active" data-metric="ROE">ROE</button>
+        <button class="metric-btn" data-metric="ROIC">ROIC</button>
+        <button class="metric-btn" data-metric="WACC">WACC</button>
+        <button class="metric-btn" data-metric="EVA">EVA</button>
+      </div>
+
+      <!-- Heatmap -->
+      <div class="section-card" style="padding:16px;">
+        <div id="heatmap-container">
+          <div class="empty-state">
+            <div class="empty-icon">📊</div>
+            <p>Finansal veriler yükleniyor…</p>
+            <p style="margin-top:8px;">
+              <button class="btn-primary" id="btn-fetch-financials-2">📥 Verileri Şimdi Çek</button>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         TAB: AYARLAR
+    ════════════════════════════════════════ -->
+    <div id="panel-settings" class="tab-panel">
+
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Ayarlar</h2>
+          <div class="panel-subtitle">API anahtarı, Rf oranı ve diğer yapılandırmalar</div>
+        </div>
+      </div>
+
+      <!-- Gemini API Key (hidden - pre-configured) -->
+      <div class="settings-section" style="display:none;" id="gemini-key-section">
+        <h3>🤖 Google Gemini API</h3>
+        <p style="font-size:13px;color:var(--text-m);margin-bottom:16px;">
+          KAP bildirimlerini analiz etmek için Gemini API kullanılır.
+          <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a>'dan ücretsiz key alabilirsiniz.
+        </p>
+        <div class="form-group">
+          <label>API Key</label>
+          <input type="password" id="gemini-key-input" placeholder="AIza…" autocomplete="off">
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" id="btn-save-key">💾 Kaydet</button>
+          <button class="btn-secondary" id="btn-test-key">🧪 Test Et</button>
+        </div>
+      </div>
+
+      <!-- Rf Rate -->
+      <div class="settings-section">
+        <h3>📈 WACC Parametreleri</h3>
+        <div class="form-group">
+          <label>Risksiz Faiz Oranı — Rf (Türkiye 10Y Devlet Tahvili %)</label>
+          <input type="text" id="rf-rate-input" placeholder="örn: 30" style="font-family:var(--mono);">
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" id="btn-save-rf">💾 Kaydet</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-s);margin-top:12px;">
+          💡 Güncel TCMB politika faizi ve 10 yıllık devlet tahvili faizini
+          <a href="https://www.tcmb.gov.tr" target="_blank">TCMB</a> veya
+          <a href="https://www.investing.com/rates-bonds/turkey-10-year-bond-yield" target="_blank">Investing.com</a>'dan takip edebilirsiniz.
+        </p>
+      </div>
+
+      <!-- Data management -->
+      <div class="settings-section">
+        <h3>🗃️ Veri Yönetimi</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-secondary" id="btn-clear-kap-data">🗑️ KAP Verilerini Temizle</button>
+          <button class="btn-secondary" id="btn-clear-financial-data">🗑️ Finansal Verileri Temizle</button>
+          <button class="btn-danger" id="btn-reset-all">⚠️ Tümünü Sıfırla</button>
+        </div>
+        <p style="font-size:12px;color:var(--text-s);margin-top:12px;">
+          Temizleme sonrası yeniden tarama gerekebilir.
+        </p>
+      </div>
+
+      <!-- About -->
+      <div class="settings-section">
+        <h3>ℹ️ Hakkında</h3>
+        <div style="font-size:13px;color:var(--text-m);line-height:1.8;">
+          <p><b style="color:var(--text-b)">Kaynak:</b> KAP (Kamuyu Aydınlatma Platformu) — <a href="https://www.kap.org.tr" target="_blank">kap.org.tr</a></p>
+          <p><b style="color:var(--text-b)">AI Modeli:</b> Google Gemini 2.0 Flash</p>
+          <p><b style="color:var(--text-b)">Tarama Saatleri:</b> 09:30 ve 16:00 (tarayıcı açıkken)</p>
+          <p><b style="color:var(--text-b)">Depolama:</b> Tüm veriler yerel tarayıcıda (IndexedDB + localStorage)</p>
+          <p style="margin-top:10px;padding:10px;background:var(--neg-dim);border-radius:8px;border:1px solid rgba(255,82,82,0.2);">
+            ⚠️ Bu araç yatırım tavsiyesi vermez. Tüm analizler bilgilendirme amaçlıdır.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     STOCK MANAGER MODAL
+═══════════════════════════════════════════════════════ -->
+<div id="stock-modal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>⚙️ Hisse Listesi Yönetimi</h3>
+      <button class="btn-icon" id="btn-close-stock-modal">✕</button>
+    </div>
+
+    <p style="font-size:13px;color:var(--text-m);margin-bottom:14px;">
+      İzlemek istediğiniz hisseleri seçin veya yeni ekleyin.
+    </p>
+
+    <div id="stock-check-list">
+      <!-- Dynamically rendered -->
+    </div>
+
+    <div class="add-stock-row">
+      <input type="text" id="add-ticker-input" placeholder="Yeni hisse ekle (örn: THYAO)" maxlength="8">
+      <button class="btn-secondary" onclick="document.getElementById('add-ticker-input').value.trim() && document.getElementById('btn-save-stocks').click()">
+        + Ekle & Kaydet
+      </button>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" id="btn-close-stock-modal-2" onclick="document.getElementById('stock-modal').classList.remove('open')">İptal</button>
+      <button class="btn-primary" id="btn-save-stocks">✅ Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     PROGRESS BAR
+═══════════════════════════════════════════════════════ -->
+<div id="progress-bar-wrap">
+  <span id="progress-bar-text">Yükleniyor…</span>
+  <div class="progress-bar">
+    <div id="progress-bar-inner"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     TOAST
+═══════════════════════════════════════════════════════ -->
+<div id="toast" class="toast toast-info"></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     SCRIPTS (order matters: deps first)
+═══════════════════════════════════════════════════════ -->
+<script src="config.js"></script>
+<script src="store.js"></script>
+<script src="cors-proxy.js"></script>
+<script src="kap-api.js"></script>
+<script src="gemini.js"></script>
+<script src="financial-calc.js"></script>
+<script src="heatmap.js"></script>
+<script src="kap-panel.js"></script>
+<script src="scheduler.js"></script>
+<script src="app.js"></script>
+
+<!-- Extra wiring for settings panel -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  // ── Rf Rate ─────────────────────────────────────
+  const rfInput = document.getElementById('rf-rate-input');
+  if (rfInput) {
+    const saved = Store.lsGet('rf_rate', 30);
+    rfInput.value = saved;
+    const rfDisplay = document.getElementById('rf-display');
+    if (rfDisplay) rfDisplay.textContent = '~' + saved + '% (TR 10Y)';
+  }
+
+  document.getElementById('btn-save-rf')?.addEventListener('click', () => {
+    const v = parseFloat(document.getElementById('rf-rate-input').value);
+    if (!isNaN(v) && v > 0 && v < 100) {
+      Store.lsSet('rf_rate', v);
+      const rfDisplay = document.getElementById('rf-display');
+      if (rfDisplay) rfDisplay.textContent = '~' + v + '% (TR 10Y)';
+      App.showToast('Rf oranı güncellendi.', 'success');
+    }
+  });
+
+  // ── Data management ──────────────────────────────
+  document.getElementById('btn-clear-kap-data')?.addEventListener('click', () => App.clearKapData());
+  document.getElementById('btn-clear-financial-data')?.addEventListener('click', () => App.clearFinancialData());
+  document.getElementById('btn-reset-all')?.addEventListener('click', () => App.resetAll());
+
+  // ── Second fetch button (in heatmap empty state) ──
+  document.getElementById('btn-fetch-financials-2')?.addEventListener('click', () => App.fetchAllFinancials());
+
+  // ── Stats update loop ──────────────────────────────
+  setInterval(() => App.updateStats(), 5000);
+});
+</script>
+
+</body>
+</html>
