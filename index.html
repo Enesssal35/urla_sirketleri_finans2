@@ -1,11 +1,1200 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="BIST Hisse Takip Paneli — ROE/ROIC/WACC ısı haritası ve KAP bildirim analizi">
   <title>BIST Tracker — Finansal Analiz & KAP Takip</title>
-  <link rel="stylesheet" href="main.css">
+  <style>
+/* ============================================================
+   BIST Tracker — Global Styles (Dark Premium Theme)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── CSS Variables ─────────────────────────────────────── */
+:root {
+  --bg-deep:    #060912;
+  --bg-base:    #0A0E1A;
+  --bg-card:    rgba(255,255,255,0.04);
+  --bg-card-hv: rgba(255,255,255,0.07);
+  --bg-glass:   rgba(10,14,26,0.85);
+
+  --accent:     #00D4FF;
+  --accent-dim: rgba(0,212,255,0.15);
+  --pos:        #00E676;
+  --neg:        #FF5252;
+  --neu:        #FFD740;
+  --pos-dim:    rgba(0,230,118,0.1);
+  --neg-dim:    rgba(255,82,82,0.1);
+  --neu-dim:    rgba(255,215,64,0.1);
+
+  --text-h:     #F0F4FF;
+  --text-b:     #B8C4DC;
+  --text-m:     #7A8BA8;
+  --text-s:     #4A5570;
+
+  --border:     rgba(255,255,255,0.08);
+  --border-acc: rgba(0,212,255,0.3);
+
+  --radius-sm:  6px;
+  --radius-md:  12px;
+  --radius-lg:  18px;
+
+  --shadow-glow: 0 0 40px rgba(0,212,255,0.08);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.4);
+
+  --font:       'Inter', system-ui, sans-serif;
+  --mono:       'JetBrains Mono', monospace;
+
+  --header-h:   64px;
+  --sidebar-w:  260px;
+}
+
+/* ── Reset ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background:  var(--bg-deep);
+  color:       var(--text-b);
+  min-height:  100vh;
+  overflow-x:  hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { cursor: pointer; font-family: var(--font); }
+input, select { font-family: var(--font); }
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+
+/* ──────────────────────────────────────────────────────── */
+/*  LAYOUT                                                  */
+/* ──────────────────────────────────────────────────────── */
+
+/* Header */
+.header {
+  position:    sticky;
+  top:         0;
+  z-index:     100;
+  height:      var(--header-h);
+  display:     flex;
+  align-items: center;
+  justify-content: space-between;
+  padding:     0 24px;
+  background:  rgba(6,9,18,0.95);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+}
+
+.header-brand {
+  display:     flex;
+  align-items: center;
+  gap:         12px;
+}
+
+.header-logo {
+  width:  36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent), #7B2FFF);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: 0 0 20px rgba(0,212,255,0.3);
+}
+
+.header-title {
+  font-size:   18px;
+  font-weight: 700;
+  color:       var(--text-h);
+  letter-spacing: -0.3px;
+}
+
+.header-subtitle {
+  font-size:  11px;
+  color:      var(--text-m);
+  margin-top: 1px;
+}
+
+.header-right {
+  display:     flex;
+  align-items: center;
+  gap:         16px;
+}
+
+#live-clock {
+  font-family: var(--mono);
+  font-size:   12px;
+  color:       var(--text-m);
+}
+
+/* Main layout */
+.app-layout {
+  display:        flex;
+  min-height:     calc(100vh - var(--header-h));
+}
+
+/* Sidebar */
+.sidebar {
+  width:        var(--sidebar-w);
+  flex-shrink:  0;
+  background:   rgba(255,255,255,0.02);
+  border-right: 1px solid var(--border);
+  padding:      20px 16px;
+  display:      flex;
+  flex-direction: column;
+  gap:          8px;
+  position:     sticky;
+  top:          var(--header-h);
+  height:       calc(100vh - var(--header-h));
+  overflow-y:   auto;
+}
+
+.sidebar-section {
+  margin-bottom: 4px;
+}
+
+.sidebar-label {
+  font-size:     10px;
+  font-weight:   600;
+  color:         var(--text-s);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  padding:       8px 8px 4px;
+}
+
+/* Tab buttons in sidebar */
+.tab-btn {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  width:       100%;
+  padding:     10px 12px;
+  background:  transparent;
+  border:      1px solid transparent;
+  border-radius: var(--radius-sm);
+  color:       var(--text-m);
+  font-size:   13px;
+  font-weight: 500;
+  transition:  all 0.2s;
+  text-align:  left;
+}
+
+.tab-btn:hover {
+  background: var(--bg-card-hv);
+  color:      var(--text-h);
+}
+
+.tab-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--border-acc);
+  color:      var(--accent);
+}
+
+.tab-btn .tab-icon { font-size: 16px; }
+
+/* Sidebar scheduler */
+.sidebar-scheduler {
+  margin-top:  auto;
+  padding:     12px;
+  background:  var(--bg-card);
+  border:      1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.sidebar-scheduler h4 {
+  font-size:  11px;
+  font-weight: 600;
+  color:      var(--text-m);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+#scheduler-status {
+  font-size: 12px;
+  color:     var(--text-b);
+}
+
+.sched-row {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  margin-bottom: 6px;
+}
+
+.sched-dot {
+  width:         8px;
+  height:        8px;
+  border-radius: 50%;
+  flex-shrink:   0;
+}
+
+.sched-dot.done { background: var(--pos); box-shadow: 0 0 6px var(--pos); }
+.sched-dot.wait { background: var(--text-s); }
+
+.sched-next {
+  margin-top:  8px;
+  font-size:   11px;
+  color:       var(--text-m);
+  font-family: var(--mono);
+}
+
+/* Main content */
+.main-content {
+  flex:       1;
+  min-width:  0;
+  padding:    24px;
+  overflow-y: auto;
+}
+
+/* Tab panels */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ──────────────────────────────────────────────────────── */
+/*  BUTTONS                                                 */
+/* ──────────────────────────────────────────────────────── */
+
+.btn-primary {
+  background:  linear-gradient(135deg, var(--accent), #0090CC);
+  color:       #000;
+  border:      none;
+  padding:     10px 18px;
+  border-radius: var(--radius-sm);
+  font-size:   13px;
+  font-weight: 600;
+  transition:  all 0.2s;
+  display:     inline-flex;
+  align-items: center;
+  gap:         6px;
+}
+
+.btn-primary:hover {
+  transform:   translateY(-1px);
+  box-shadow:  0 4px 16px rgba(0,212,255,0.4);
+}
+
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-secondary {
+  background:  var(--bg-card);
+  color:       var(--text-b);
+  border:      1px solid var(--border);
+  padding:     8px 14px;
+  border-radius: var(--radius-sm);
+  font-size:   13px;
+  font-weight: 500;
+  transition:  all 0.2s;
+}
+
+.btn-secondary:hover {
+  background:  var(--bg-card-hv);
+  border-color: rgba(255,255,255,0.15);
+  color:       var(--text-h);
+}
+
+.btn-danger {
+  background:  rgba(255,82,82,0.15);
+  color:       var(--neg);
+  border:      1px solid rgba(255,82,82,0.3);
+  padding:     8px 14px;
+  border-radius: var(--radius-sm);
+  font-size:   13px;
+  font-weight: 500;
+}
+
+/* ──────────────────────────────────────────────────────── */
+/*  HEATMAP PANEL                                           */
+/* ──────────────────────────────────────────────────────── */
+
+.panel-header {
+  display:       flex;
+  align-items:   center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap:     wrap;
+  gap:           12px;
+}
+
+.panel-title {
+  font-size:   20px;
+  font-weight: 700;
+  color:       var(--text-h);
+}
+
+.panel-subtitle {
+  font-size: 13px;
+  color:     var(--text-m);
+  margin-top: 2px;
+}
+
+/* Metric selector */
+.metric-selector {
+  display:  flex;
+  gap:      6px;
+  flex-wrap: wrap;
+}
+
+.metric-btn {
+  padding:     8px 16px;
+  background:  var(--bg-card);
+  border:      1px solid var(--border);
+  border-radius: 20px;
+  color:       var(--text-m);
+  font-size:   13px;
+  font-weight: 600;
+  transition:  all 0.2s;
+}
+
+.metric-btn:hover {
+  border-color: rgba(255,255,255,0.2);
+  color:        var(--text-h);
+}
+
+.metric-btn.active {
+  background:   var(--accent-dim);
+  border-color: var(--border-acc);
+  color:        var(--accent);
+}
+
+/* Heatmap container */
+#heatmap-container { position: relative; }
+
+.hm-legend {
+  display:       flex;
+  align-items:   center;
+  gap:           16px;
+  margin-bottom: 16px;
+  font-size:     12px;
+  color:         var(--text-m);
+}
+
+.hm-legend-scale { display: flex; align-items: center; gap: 8px; }
+
+.hm-legend-gradient {
+  width:         120px;
+  height:        12px;
+  border-radius: 6px;
+  background:    linear-gradient(to right, rgba(220,40,40,0.85), rgba(220,200,40,0.85), rgba(40,200,40,0.85));
+}
+
+.hm-legend-label { font-size: 11px; }
+.hm-legend-label.bad  { color: #FF6B6B; }
+.hm-legend-label.good { color: var(--pos); }
+.hm-legend-note { font-size: 11px; opacity: 0.6; }
+
+.hm-scroll { overflow-x: auto; border-radius: var(--radius-md); }
+
+.hm-table {
+  border-collapse: separate;
+  border-spacing:  2px;
+  min-width:       900px;
+  width:           100%;
+}
+
+.hm-th-ticker,
+.hm-td-ticker {
+  min-width:   110px;
+  padding:     6px 10px;
+  text-align:  left;
+  position:    sticky;
+  left:        0;
+  background:  var(--bg-deep);
+  z-index:     2;
+}
+
+.hm-th-ticker {
+  font-size:     11px;
+  font-weight:   600;
+  color:         var(--text-s);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hm-th-period {
+  padding:    6px 4px;
+  text-align: center;
+  font-size:  11px;
+  font-weight: 600;
+  color:      var(--text-s);
+  min-width:  54px;
+  white-space: nowrap;
+}
+
+.hm-ticker {
+  display:     block;
+  font-size:   13px;
+  font-weight: 700;
+  color:       var(--text-h);
+  font-family: var(--mono);
+}
+
+.hm-sector {
+  display:   block;
+  font-size: 10px;
+  color:     var(--text-s);
+  margin-top: 1px;
+}
+
+.hm-td-cell {
+  text-align:    center;
+  border-radius: 4px;
+  padding:       6px 3px;
+  transition:    all 0.15s;
+  cursor:        default;
+  min-width:     54px;
+}
+
+.hm-td-cell:hover {
+  filter:    brightness(1.3);
+  transform: scale(1.05);
+  z-index:   1;
+  position:  relative;
+}
+
+.hm-cell-val {
+  font-family: var(--mono);
+  font-size:   11px;
+  font-weight: 600;
+  color:       rgba(255,255,255,0.9);
+  display:     block;
+}
+
+.hm-no-data {
+  color:     var(--text-s);
+  font-size: 11px;
+}
+
+/* Heatmap tooltip */
+.hm-tooltip {
+  position:     fixed;
+  z-index:      999;
+  background:   rgba(6,9,18,0.97);
+  border:       1px solid var(--border-acc);
+  border-radius: var(--radius-md);
+  padding:      14px;
+  min-width:    200px;
+  box-shadow:   var(--shadow-card), var(--shadow-glow);
+  pointer-events: none;
+}
+
+.tt-header {
+  font-size:     13px;
+  font-weight:   700;
+  color:         var(--accent);
+  margin-bottom: 10px;
+  font-family:   var(--mono);
+}
+
+.tt-row {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  font-size:       12px;
+  padding:         3px 0;
+  border-bottom:   1px solid var(--border);
+}
+
+.tt-row:last-child { border-bottom: none; }
+.tt-row span:first-child { color: var(--text-m); }
+.tt-row span:last-child  { font-family: var(--mono); font-weight: 600; }
+.tt-pos { color: var(--pos) !important; }
+.tt-neg { color: var(--neg) !important; }
+
+/* ──────────────────────────────────────────────────────── */
+/*  KAP PANEL                                               */
+/* ──────────────────────────────────────────────────────── */
+
+.kap-toolbar {
+  display:       flex;
+  align-items:   center;
+  gap:           12px;
+  margin-bottom: 16px;
+  flex-wrap:     wrap;
+}
+
+.scan-progress-text {
+  font-size: 12px;
+  color:     var(--text-m);
+  font-style: italic;
+  flex:       1;
+}
+
+/* Filter bar */
+.filter-bar {
+  display:       flex;
+  gap:           16px;
+  flex-wrap:     wrap;
+  align-items:   flex-end;
+  padding:       16px;
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 20px;
+}
+
+.filter-group {
+  display:        flex;
+  flex-direction: column;
+  gap:            5px;
+}
+
+.filter-group label {
+  font-size:   11px;
+  font-weight: 600;
+  color:       var(--text-s);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.filter-group input[type="date"],
+.filter-group select {
+  background:    var(--bg-card-hv);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color:         var(--text-h);
+  padding:       7px 10px;
+  font-size:     13px;
+}
+
+.filter-group select[multiple] { height: 70px; }
+
+.filter-group input[type="range"] {
+  width: 100px;
+  accent-color: var(--accent);
+}
+
+.filter-chips {
+  display:  flex;
+  gap:      6px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  padding:     5px 12px;
+  background:  var(--bg-card);
+  border:      1px solid var(--border);
+  border-radius: 20px;
+  font-size:   12px;
+  color:       var(--text-m);
+  transition:  all 0.15s;
+}
+
+.chip:hover { border-color: rgba(255,255,255,0.2); }
+.chip.active { background: var(--accent-dim); border-color: var(--border-acc); color: var(--accent); }
+.chip.pos.active { background: var(--pos-dim); border-color: rgba(0,230,118,0.4); color: var(--pos); }
+.chip.neg.active { background: var(--neg-dim); border-color: rgba(255,82,82,0.4); color: var(--neg); }
+.chip.neu.active { background: var(--neu-dim); border-color: rgba(255,215,64,0.4); color: var(--neu); }
+
+/* KAP Cards grid */
+#kap-cards {
+  display:   flex;
+  flex-direction: column;
+  gap:       14px;
+}
+
+/* Individual card */
+.kap-card {
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding:       20px;
+  transition:    all 0.2s;
+  position:      relative;
+  overflow:      hidden;
+  animation:     cardIn 0.3s ease;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.kap-card::before {
+  content:  '';
+  position: absolute;
+  left:     0; top: 0; bottom: 0;
+  width:    3px;
+}
+
+.kap-card.sig-pos::before { background: var(--pos); }
+.kap-card.sig-neg::before { background: var(--neg); }
+.kap-card.sig-neu::before { background: var(--neu); }
+
+.kap-card:hover {
+  background:  var(--bg-card-hv);
+  border-color: rgba(255,255,255,0.12);
+  transform:   translateY(-1px);
+  box-shadow:  var(--shadow-card);
+}
+
+/* Card header */
+.card-header {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     flex-start;
+  margin-bottom:   10px;
+  gap:             12px;
+  flex-wrap:       wrap;
+}
+
+.card-header-left,
+.card-header-right {
+  display:     flex;
+  align-items: center;
+  gap:         8px;
+  flex-wrap:   wrap;
+}
+
+.card-ticker {
+  font-family: var(--mono);
+  font-size:   13px;
+  font-weight: 700;
+  color:       var(--accent);
+  background:  var(--accent-dim);
+  padding:     2px 8px;
+  border-radius: 4px;
+}
+
+.card-cat {
+  font-size:   11px;
+  color:       var(--text-m);
+  background:  rgba(255,255,255,0.05);
+  padding:     2px 8px;
+  border-radius: 4px;
+  border:      1px solid var(--border);
+}
+
+.card-date {
+  font-size:   11px;
+  color:       var(--text-s);
+  font-family: var(--mono);
+}
+
+.card-impact {
+  font-size:   11px;
+  font-weight: 700;
+  padding:     2px 8px;
+  border-radius: 4px;
+  color:       #000;
+}
+
+.card-signal {
+  font-size:   12px;
+  font-weight: 600;
+  padding:     2px 10px;
+  border-radius: 12px;
+}
+
+.card-signal.signal-sig-pos { background: var(--pos-dim); color: var(--pos); }
+.card-signal.signal-sig-neg { background: var(--neg-dim); color: var(--neg); }
+.card-signal.signal-sig-neu { background: var(--neu-dim); color: var(--neu); }
+
+/* Card headline */
+.card-headline {
+  font-size:     16px;
+  font-weight:   700;
+  color:         var(--text-h);
+  margin-bottom: 10px;
+  line-height:   1.35;
+}
+
+/* Card summary */
+.card-summary {
+  font-size:     13px;
+  color:         var(--text-b);
+  line-height:   1.65;
+  margin-bottom: 14px;
+}
+
+/* Detail grid */
+.card-detail-grid {
+  display:       grid;
+  grid-template-columns: 1fr 1fr;
+  gap:           10px;
+  margin-bottom: 14px;
+}
+
+.card-detail {
+  padding:       12px;
+  border-radius: var(--radius-sm);
+  font-size:     12px;
+  line-height:   1.55;
+  color:         var(--text-b);
+}
+
+.card-detail.pos { background: var(--pos-dim); border: 1px solid rgba(0,230,118,0.15); }
+.card-detail.neg { background: var(--neg-dim); border: 1px solid rgba(255,82,82,0.15); }
+
+.card-detail-label {
+  font-size:     10px;
+  font-weight:   600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 5px;
+}
+
+.card-detail.pos .card-detail-label { color: var(--pos); }
+.card-detail.neg .card-detail-label { color: var(--neg); }
+
+/* Metrics row */
+.card-metrics-row {
+  display:       flex;
+  gap:           8px;
+  margin-bottom: 12px;
+  flex-wrap:     wrap;
+}
+
+.card-metric {
+  flex:          1;
+  min-width:     80px;
+  padding:       8px 10px;
+  background:    rgba(255,255,255,0.04);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-sm);
+  text-align:    center;
+}
+
+.cm-label {
+  display:   block;
+  font-size: 10px;
+  color:     var(--text-s);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 3px;
+}
+
+.cm-val {
+  display:   block;
+  font-size: 12px;
+  font-weight: 700;
+  color:     var(--text-h);
+  font-family: var(--mono);
+}
+
+.eva-pozitif { color: var(--pos) !important; }
+.eva-negatif { color: var(--neg) !important; }
+.eva-nötr    { color: var(--neu) !important; }
+
+/* Key numbers */
+.card-key-numbers {
+  display:       flex;
+  flex-wrap:     wrap;
+  gap:           6px;
+  margin-bottom: 12px;
+}
+
+.kn-tag {
+  font-family:   var(--mono);
+  font-size:     11px;
+  font-weight:   600;
+  color:         var(--accent);
+  background:    var(--accent-dim);
+  padding:       2px 8px;
+  border-radius: 4px;
+  border:        1px solid var(--border-acc);
+}
+
+/* Card footer */
+.card-footer {
+  display:       flex;
+  align-items:   center;
+  gap:           12px;
+  padding-top:   12px;
+  border-top:    1px solid var(--border);
+  flex-wrap:     wrap;
+}
+
+.kap-link {
+  font-size:   12px;
+  color:       var(--accent);
+  font-weight: 600;
+}
+
+.card-attachments {
+  display:  flex;
+  gap:      8px;
+  flex-wrap: wrap;
+}
+
+.att-link {
+  font-size: 11px;
+  color:     var(--text-m);
+}
+
+/* Loading state */
+.card-processing {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  color:       var(--text-m);
+  font-size:   13px;
+  margin-top:  10px;
+}
+
+.pulse-ring {
+  width:         16px;
+  height:        16px;
+  border:        2px solid var(--accent);
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation:     spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Empty state */
+.empty-state {
+  text-align:  center;
+  padding:     60px 20px;
+  color:       var(--text-s);
+}
+
+.empty-icon {
+  font-size:     48px;
+  margin-bottom: 16px;
+  opacity:       0.4;
+}
+
+/* ──────────────────────────────────────────────────────── */
+/*  SETTINGS PANEL                                          */
+/* ──────────────────────────────────────────────────────── */
+
+.settings-section {
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding:       24px;
+  margin-bottom: 20px;
+}
+
+.settings-section h3 {
+  font-size:     15px;
+  font-weight:   700;
+  color:         var(--text-h);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.form-group {
+  display:        flex;
+  flex-direction: column;
+  gap:            6px;
+  margin-bottom:  16px;
+}
+
+.form-group label {
+  font-size:   12px;
+  font-weight: 600;
+  color:       var(--text-m);
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"] {
+  background:    rgba(255,255,255,0.05);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color:         var(--text-h);
+  padding:       10px 14px;
+  font-size:     13px;
+  font-family:   var(--mono);
+  transition:    border-color 0.2s;
+}
+
+.form-group input:focus {
+  outline:      none;
+  border-color: var(--accent);
+}
+
+.form-actions {
+  display: flex;
+  gap:     10px;
+}
+
+/* ──────────────────────────────────────────────────────── */
+/*  STOCK MANAGER MODAL                                     */
+/* ──────────────────────────────────────────────────────── */
+
+.modal-overlay {
+  display:         none;
+  position:        fixed;
+  inset:           0;
+  z-index:         500;
+  background:      rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  align-items:     center;
+  justify-content: center;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal-box {
+  background:    var(--bg-base);
+  border:        1px solid var(--border-acc);
+  border-radius: var(--radius-lg);
+  padding:       28px;
+  width:         min(560px, 95vw);
+  max-height:    85vh;
+  overflow-y:    auto;
+  box-shadow:    var(--shadow-card), var(--shadow-glow);
+  animation:     modalIn 0.25s ease;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  margin-bottom:   20px;
+}
+
+.modal-header h3 {
+  font-size:   17px;
+  font-weight: 700;
+  color:       var(--text-h);
+}
+
+.btn-icon {
+  width:         32px;
+  height:        32px;
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
+  border-radius: 8px;
+  color:         var(--text-m);
+  font-size:     16px;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  transition:    all 0.15s;
+}
+
+.btn-icon:hover { background: var(--bg-card-hv); color: var(--text-h); }
+
+#stock-check-list {
+  display:   flex;
+  flex-direction: column;
+  gap:       8px;
+  margin-bottom: 16px;
+}
+
+.stock-check-item {
+  display:     flex;
+  align-items: center;
+  gap:         10px;
+  padding:     10px 12px;
+  background:  var(--bg-card);
+  border:      1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor:      pointer;
+  transition:  all 0.15s;
+}
+
+.stock-check-item:hover { background: var(--bg-card-hv); }
+.stock-check-item input { accent-color: var(--accent); width: 16px; height: 16px; }
+.stk-ticker { font-family: var(--mono); font-weight: 700; color: var(--accent); min-width: 60px; }
+.stk-name   { flex: 1; color: var(--text-b); font-size: 13px; }
+.stk-sector { font-size: 11px; color: var(--text-s); }
+
+.add-stock-row {
+  display:     flex;
+  gap:         8px;
+  margin-top:  12px;
+}
+
+.add-stock-row input {
+  flex:          1;
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color:         var(--text-h);
+  padding:       8px 12px;
+  font-family:   var(--mono);
+  font-size:     13px;
+  text-transform: uppercase;
+}
+
+.modal-footer {
+  display:     flex;
+  justify-content: flex-end;
+  gap:         10px;
+  margin-top:  20px;
+  padding-top: 16px;
+  border-top:  1px solid var(--border);
+}
+
+/* ──────────────────────────────────────────────────────── */
+/*  PROGRESS BAR                                            */
+/* ──────────────────────────────────────────────────────── */
+
+#progress-bar-wrap {
+  display:       none;
+  position:      fixed;
+  bottom:        80px;
+  left:          50%;
+  transform:     translateX(-50%);
+  z-index:       400;
+  flex-direction: column;
+  align-items:   center;
+  gap:           8px;
+  background:    rgba(6,9,18,0.95);
+  border:        1px solid var(--border-acc);
+  border-radius: var(--radius-md);
+  padding:       16px 24px;
+  min-width:     320px;
+  box-shadow:    var(--shadow-card), var(--shadow-glow);
+}
+
+#progress-bar-text {
+  font-size: 12px;
+  color:     var(--text-m);
+}
+
+.progress-bar {
+  width:         280px;
+  height:        4px;
+  background:    rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow:      hidden;
+}
+
+#progress-bar-inner {
+  height:     100%;
+  background: linear-gradient(90deg, var(--accent), #7B2FFF);
+  border-radius: 2px;
+  width:      0%;
+  transition: width 0.3s ease;
+}
+
+/* ──────────────────────────────────────────────────────── */
+/*  TOAST & ALERT BANNER                                    */
+/* ──────────────────────────────────────────────────────── */
+
+.toast {
+  position:     fixed;
+  bottom:       24px;
+  right:        24px;
+  z-index:      600;
+  padding:      12px 20px;
+  border-radius: var(--radius-md);
+  font-size:    13px;
+  font-weight:  500;
+  opacity:      0;
+  transform:    translateY(8px);
+  transition:   all 0.25s ease;
+  pointer-events: none;
+  max-width:    360px;
+}
+
+.toast.active {
+  opacity:   1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.toast-info    { background: var(--accent-dim); border: 1px solid var(--border-acc); color: var(--accent); }
+.toast-success { background: var(--pos-dim); border: 1px solid rgba(0,230,118,0.3); color: var(--pos); }
+.toast-warn    { background: var(--neu-dim); border: 1px solid rgba(255,215,64,0.3); color: var(--neu); }
+.toast-error   { background: var(--neg-dim); border: 1px solid rgba(255,82,82,0.3); color: var(--neg); }
+
+/* Alert banner */
+#new-alert-banner {
+  position:   fixed;
+  top:        calc(var(--header-h) + 8px);
+  left:       50%;
+  transform:  translateX(-50%) translateY(-80px);
+  z-index:    300;
+  background: linear-gradient(135deg, var(--pos-dim), rgba(0,230,118,0.2));
+  border:     1px solid rgba(0,230,118,0.4);
+  border-radius: var(--radius-md);
+  padding:    10px 24px;
+  font-size:  14px;
+  font-weight: 600;
+  color:      var(--pos);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#new-alert-banner.active {
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ──────────────────────────────────────────────────────── */
+/*  MISC                                                    */
+/* ──────────────────────────────────────────────────────── */
+
+/* Section cards for panels */
+.section-card {
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding:       24px;
+  margin-bottom: 20px;
+}
+
+/* Stat badges */
+.stat-row {
+  display:     flex;
+  gap:         12px;
+  flex-wrap:   wrap;
+  margin-bottom: 20px;
+}
+
+.stat-badge {
+  flex:          1;
+  min-width:     120px;
+  padding:       14px 16px;
+  background:    var(--bg-card);
+  border:        1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-align:    center;
+}
+
+.stat-badge-label {
+  font-size:   11px;
+  color:       var(--text-s);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 4px;
+}
+
+.stat-badge-val {
+  font-size:   22px;
+  font-weight: 800;
+  color:       var(--text-h);
+  font-family: var(--mono);
+}
+
+/* Divider */
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .card-detail-grid { grid-template-columns: 1fr; }
+  .hm-table { font-size: 11px; }
+}
+
+</style>
 </head>
 <body>
 
@@ -313,16 +1502,2148 @@
 <!-- ═══════════════════════════════════════════════════════
      SCRIPTS (order matters: deps first)
 ═══════════════════════════════════════════════════════ -->
-<script src="config.js"></script>
-<script src="store.js"></script>
-<script src="cors-proxy.js"></script>
-<script src="kap-api.js"></script>
-<script src="gemini.js"></script>
-<script src="financial-calc.js"></script>
-<script src="heatmap.js"></script>
-<script src="kap-panel.js"></script>
-<script src="scheduler.js"></script>
-<script src="app.js"></script>
+<script>
+// ============================================================
+// BIST Tracker — Config
+// ============================================================
+
+const _K = atob('QVEuQWI4Uk42S1hTUndaSWhNaXFVM0dEWnpJOER0RlQxU3RhLVFFc3oyZ1hwcWNvaEdWU2c=');
+
+const CONFIG = {
+  version: '1.0.0',
+
+  stocks: [
+    { ticker: 'EGEEN', name: 'Ege Endüstri', sector: 'Otomotiv' },
+    { ticker: 'FROTO', name: 'Ford Otosan', sector: 'Otomotiv' },
+    { ticker: 'CLEBI', name: 'Celebi Hava Servisi', sector: 'Havacılık' },
+    { ticker: 'BRSAN', name: 'Borusan Mannesmann', sector: 'Metal' },
+    { ticker: 'CCOLA', name: 'Coca-Cola İçecek', sector: 'İçecek' },
+    { ticker: 'PGSUS', name: 'Pegasus Hava Taşımacılığı', sector: 'Havacılık' },
+    { ticker: 'OTKAR', name: 'Otokar Otomobil', sector: 'Savunma/Otomotiv' },
+    { ticker: 'ISMEN', name: 'İş Girişim Sermayesi', sector: 'Finans' },
+    { ticker: 'ANSGR', name: 'Anadolu Sigorta', sector: 'Sigorta' },
+    { ticker: 'LOGO',  name: 'Logo Yazılım', sector: 'Teknoloji' },
+    { ticker: 'LKMNH', name: 'Lokman Hekim', sector: 'Sağlık' },
+    { ticker: 'ALKA',  name: 'Alka Kimya', sector: 'Kimya' },
+    { ticker: 'ALTNY', name: 'Altın Yunus Çeşme', sector: 'Turizm' },
+    { ticker: 'SODSN', name: 'Sodaş Sodyum', sector: 'Kimya' },
+  ],
+
+  // KAP disclosure categories to track
+  targetCategories: [
+    'Özel Durum Açıklaması',
+    'Faaliyet Raporu',
+    'Finansal Rapor',
+    'Sermaye Artırımı',
+    'Borçlanma',
+    'Yatırım',
+    'Teşvik',
+    'Sözleşme',
+    'Sipariş',
+    'İş İlişkisi',
+    'CapEx',
+  ],
+
+  // CORS proxies — null origin uyumlu (file:// protokolü için)
+  corsProxies: [
+    'https://corsproxy.io/?url=',          // Ana proxy
+    'https://api.allorigins.win/raw?url=', // Yedek 1
+    'https://cors-proxy.fringe.zone/',     // Yedek 2 — null origin kabul eder
+    'https://proxy.cors.sh/',              // Yedek 3
+  ],
+
+  // KAP base URLs
+  kap: {
+    base:        'https://www.kap.org.tr',
+    apiBase:     'https://www.kap.org.tr/tr/api',
+    disclosure:  'https://www.kap.org.tr/tr/BildirimDetay',
+    company:     'https://www.kap.org.tr/tr/Sirket',
+    financials:  'https://www.kap.org.tr/tr/sirket-finansallari',
+    // Public JSON API endpoints (no CORS issue on some)
+    disclosureQuery: 'https://www.kap.org.tr/tr/api/memberDisclosureQuery',
+    memberSummary:   'https://www.kap.org.tr/tr/api/memberSummary',
+  },
+
+  // Scheduler times (HH:MM in local time)
+  scheduleTimes: ['09:30', '16:00'],
+
+  // Gemini
+  gemini: {
+    model: 'gemini-2.0-flash',
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models',
+  },
+
+  // How many past quarters to show
+  quarterCount: 20,
+
+  // Past 6 months for initial KAP scan (milliseconds)
+  initialScanDays: 180,
+};
+
+// Make immutable at runtime
+Object.freeze(CONFIG);
+
+</script>
+<script>
+// ============================================================
+// BIST Tracker — Store (localStorage + IndexedDB)
+// ============================================================
+
+const Store = (() => {
+  const DB_NAME    = 'bist_tracker';
+  const DB_VERSION = 2;
+  let db = null;
+
+  // ---------- IndexedDB bootstrap ----------
+  async function openDB() {
+    if (db) return db;
+    return new Promise((res, rej) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = e => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains('disclosures')) {
+          const s = d.createObjectStore('disclosures', { keyPath: 'id' });
+          s.createIndex('ticker',    'ticker',    { unique: false });
+          s.createIndex('date',      'date',      { unique: false });
+          s.createIndex('category',  'category',  { unique: false });
+          s.createIndex('signal',    'signal',    { unique: false });
+        }
+        if (!d.objectStoreNames.contains('financials')) {
+          const f = d.createObjectStore('financials', { keyPath: 'key' }); // key = "TICKER_YYYY_Q"
+          f.createIndex('ticker', 'ticker', { unique: false });
+        }
+      };
+      req.onsuccess = e => { db = e.target.result; res(db); };
+      req.onerror   = e => rej(e.target.error);
+    });
+  }
+
+  async function idbPut(store, data) {
+    const d = await openDB();
+    return new Promise((res, rej) => {
+      const tx = d.transaction(store, 'readwrite');
+      const st = tx.objectStore(store);
+      const r  = st.put(data);
+      r.onsuccess = () => res(r.result);
+      r.onerror   = () => rej(r.error);
+    });
+  }
+
+  async function idbGetAll(store, indexName, query) {
+    const d = await openDB();
+    return new Promise((res, rej) => {
+      const tx = d.transaction(store, 'readonly');
+      const st = tx.objectStore(store);
+      const target = indexName ? st.index(indexName).getAll(query) : st.getAll();
+      target.onsuccess = () => res(target.result);
+      target.onerror   = () => rej(target.error);
+    });
+  }
+
+  async function idbGet(store, key) {
+    const d = await openDB();
+    return new Promise((res, rej) => {
+      const tx = d.transaction(store, 'readonly');
+      const r  = tx.objectStore(store).get(key);
+      r.onsuccess = () => res(r.result);
+      r.onerror   = () => rej(r.error);
+    });
+  }
+
+  async function idbDelete(store, key) {
+    const d = await openDB();
+    return new Promise((res, rej) => {
+      const tx = d.transaction(store, 'readwrite');
+      const r  = tx.objectStore(store).delete(key);
+      r.onsuccess = () => res();
+      r.onerror   = () => rej(r.error);
+    });
+  }
+
+  async function idbClear(store) {
+    const d = await openDB();
+    return new Promise((res, rej) => {
+      const tx = d.transaction(store, 'readwrite');
+      const r  = tx.objectStore(store).clear();
+      r.onsuccess = () => res();
+      r.onerror   = () => rej(r.error);
+    });
+  }
+
+  // ---------- localStorage helpers ----------
+  function lsGet(key, def = null) {
+    try {
+      const v = localStorage.getItem(key);
+      return v !== null ? JSON.parse(v) : def;
+    } catch { return def; }
+  }
+
+  function lsSet(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.warn('lsSet failed', e); }
+  }
+
+  function lsDel(key) { localStorage.removeItem(key); }
+
+  // ---------- Gemini API key ----------
+  function getApiKey()       { return lsGet('gemini_api_key', ''); }
+  function setApiKey(k)      { lsSet('gemini_api_key', k); }
+
+  // ---------- Stock list ----------
+  function getStocks()       { return lsGet('user_stocks', null); }
+  function setStocks(list)   { lsSet('user_stocks', list); }
+
+  // ---------- Scan metadata ----------
+  function getLastScanTime(period) { return lsGet(`last_scan_${period}`, null); }
+  function setLastScanTime(period) { lsSet(`last_scan_${period}`, Date.now()); }
+  function getInitialScanDone()    { return lsGet('initial_scan_done', false); }
+  function setInitialScanDone()    { lsSet('initial_scan_done', true); }
+
+  // ---------- Disclosures (IndexedDB) ----------
+  async function saveDisclosure(d)        { return idbPut('disclosures', d); }
+  async function getAllDisclosures()       { return idbGetAll('disclosures'); }
+  async function getDisclosuresByTicker(t){ return idbGetAll('disclosures', 'ticker', t); }
+  async function disclosureExists(id)     { return !!(await idbGet('disclosures', id)); }
+  async function deleteDisclosure(id)     { return idbDelete('disclosures', id); }
+  async function clearDisclosures()       { return idbClear('disclosures'); }
+
+  // ---------- Financials (IndexedDB) ----------
+  async function saveFinancial(d)         { return idbPut('financials', d); }
+  async function getFinancialsByTicker(t) { return idbGetAll('financials', 'ticker', t); }
+  async function clearFinancials()        { return idbClear('financials'); }
+
+  // ---------- UI state (localStorage) ----------
+  function getActiveTab()    { return lsGet('active_tab', 'kap'); }
+  function setActiveTab(t)   { lsSet('active_tab', t); }
+  function getMetric()       { return lsGet('heatmap_metric', 'ROE'); }
+  function setMetric(m)      { lsSet('heatmap_metric', m); }
+  function getFilters()      { return lsGet('kap_filters', {}); }
+  function setFilters(f)     { lsSet('kap_filters', f); }
+
+  return {
+    openDB,
+    // API key
+    getApiKey, setApiKey,
+    // Stocks
+    getStocks, setStocks,
+    // Scan
+    getLastScanTime, setLastScanTime, getInitialScanDone, setInitialScanDone,
+    // Disclosures
+    saveDisclosure, getAllDisclosures, getDisclosuresByTicker, disclosureExists, deleteDisclosure, clearDisclosures,
+    // Financials
+    saveFinancial, getFinancialsByTicker, clearFinancials,
+    // UI state
+    getActiveTab, setActiveTab, getMetric, setMetric, getFilters, setFilters,
+    // Raw ls access
+    lsGet, lsSet, lsDel,
+  };
+})();
+
+</script>
+<script>
+// ============================================================
+// BIST Tracker — CORS Proxy Wrapper
+// ============================================================
+
+const CorsProxy = (() => {
+  let currentProxyIdx = 0;
+  const proxies = CONFIG.corsProxies;
+
+  async function fetchViaProxy(url, opts = {}, proxyIdx = currentProxyIdx) {
+    if (proxyIdx >= proxies.length) {
+      throw new Error(`Tüm CORS proxy'leri başarısız oldu. URL: ${url}`);
+    }
+
+    const proxy   = proxies[proxyIdx];
+    const fullUrl = proxy + encodeURIComponent(url);
+
+    try {
+      const resp = await fetch(fullUrl, {
+        ...opts,
+        headers: {
+          'Accept': 'application/json, text/html, */*',
+          ...(opts.headers || {}),
+        },
+        signal: opts.signal || AbortSignal.timeout(15000),
+      });
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+      currentProxyIdx = proxyIdx; // remember working proxy
+      return resp;
+    } catch (err) {
+      console.warn(`Proxy ${proxy} başarısız:`, err.message, '— sonraki deneniyor…');
+      return fetchViaProxy(url, opts, proxyIdx + 1);
+    }
+  }
+
+  // Try direct fetch first (some KAP JSON APIs don't have CORS restriction)
+  async function fetchSmart(url, opts = {}) {
+    try {
+      const resp = await fetch(url, {
+        ...opts,
+        signal: opts.signal || AbortSignal.timeout(10000),
+        headers: {
+          'Accept': 'application/json, text/html, */*',
+          'Accept-Language': 'tr-TR,tr;q=0.9',
+          ...(opts.headers || {}),
+        },
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      return resp;
+    } catch {
+      // Fallback to proxy
+      return fetchViaProxy(url, opts);
+    }
+  }
+
+  async function getText(url)   { return (await fetchSmart(url)).text(); }
+  async function getJSON(url)   { return (await fetchSmart(url)).json(); }
+  async function getTextProxy(url) { return (await fetchViaProxy(url)).text(); }
+
+  return { fetchSmart, fetchViaProxy, getText, getJSON, getTextProxy };
+})();
+
+</script>
+<script>
+// ============================================================
+// BIST Tracker — KAP API Layer
+// ============================================================
+
+const KapAPI = (() => {
+
+  // Map ticker → KAP member code (MKK codes used in KAP API)
+  // These are the numeric/slug codes used in KAP's internal API.
+  // We'll try to resolve them dynamically; fallback = ticker search.
+  const TICKER_TO_MKK = {
+    EGEEN: 'egeen',   FROTO: 'froto',  CLEBI: 'clebi',
+    BRSAN: 'brsan',   CCOLA: 'ccola',  PGSUS: 'pgsus',
+    OTKAR: 'otkar',   ISMEN: 'ismen',  ANSGR: 'ansgr',
+    LOGO:  'logo',    LKMNH: 'lkmnh',  ALKA:  'alka',
+    ALTNY: 'altny',   SODSN: 'sodsn',
+  };
+
+  // -------------------------------------------------------
+  // Fetch disclosure list for a ticker from KAP JSON API
+  // Returns array of { id, ticker, title, date, category, url, attachments }
+  // -------------------------------------------------------
+  async function fetchDisclosureList(ticker, fromDate = null) {
+    const slug  = TICKER_TO_MKK[ticker] || ticker.toLowerCase();
+
+    // KAP JSON API: returns paginated disclosure list
+    const params = new URLSearchParams({
+      memberCode: slug,
+      isLarge:    'false',
+      inactiveMember: 'false',
+    });
+
+    let rawList = [];
+
+    // Try KAP's public JSON API
+    try {
+      const url = `${CONFIG.kap.disclosureQuery}?${params}`;
+      const data = await CorsProxy.getJSON(url);
+      if (Array.isArray(data)) rawList = data;
+      else if (data && Array.isArray(data.data)) rawList = data.data;
+    } catch (err) {
+      console.warn(`KAP JSON API başarısız (${ticker}):`, err.message);
+      // Fallback: scrape the HTML page
+      rawList = await scrapeDisclosureListHTML(ticker, fromDate);
+    }
+
+    // Filter by date
+    const cutoff = fromDate ? new Date(fromDate) : null;
+
+    return rawList
+      .map(d => normalizeDisclosure(d, ticker))
+      .filter(d => {
+        if (!cutoff) return true;
+        const dDate = new Date(d.date);
+        return dDate >= cutoff;
+      });
+  }
+
+  function normalizeDisclosure(raw, ticker) {
+    // Handles both API shape and scraped shape
+    const id       = String(raw.id || raw.disclosureId || raw.disclosureIndex || '');
+    const date     = raw.publishDate || raw.date || raw.publishedAt || '';
+    const title    = raw.title || raw.disclosure_title || raw.disclosureTitle || '';
+    const category = raw.disclosureType || raw.category || raw.typeDescription || '';
+    const url      = `${CONFIG.kap.disclosure}/${id}`;
+
+    return {
+      id,
+      ticker,
+      title:    title.trim(),
+      date:     normalizeDate(date),
+      category: category.trim(),
+      url,
+      raw,      // keep original for detail fetch
+      summary:  null,
+      signal:   null,
+      impact:   null,
+      processed: false,
+    };
+  }
+
+  function normalizeDate(raw) {
+    if (!raw) return '';
+    // KAP dates can be "01.08.2026 09:32" or ISO format
+    if (raw.includes('T')) return raw.slice(0, 10);
+    const parts = raw.split(/[\s\.\/]/);
+    if (parts.length >= 3) {
+      // DD.MM.YYYY or YYYY-MM-DD
+      if (parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2,'0')}-${parts[2].padStart(2,'0')}`;
+      return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+    }
+    return raw;
+  }
+
+  // -------------------------------------------------------
+  // Scrape disclosure list page (HTML fallback)
+  // -------------------------------------------------------
+  async function scrapeDisclosureListHTML(ticker, fromDate) {
+    const slug = TICKER_TO_MKK[ticker] || ticker.toLowerCase();
+    const url  = `${CONFIG.kap.company}/${slug}/Bildirimler`;
+    const html = await CorsProxy.getText(url);
+    const doc  = new DOMParser().parseFromString(html, 'text/html');
+
+    const results = [];
+    const cutoff  = fromDate ? new Date(fromDate) : null;
+
+    // KAP table rows have class "disclosure-row" or similar
+    const rows = doc.querySelectorAll('table tbody tr, .disclosure-row, .w-clearfix.sub');
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td, .cell-data');
+      if (cells.length < 2) return;
+
+      const linkEl    = row.querySelector('a[href*="BildirimDetay"]');
+      const href      = linkEl ? linkEl.getAttribute('href') : '';
+      const idMatch   = href.match(/BildirimDetay\/(\d+)/);
+      const id        = idMatch ? idMatch[1] : Math.random().toString(36).slice(2);
+      const dateText  = cells[0]?.textContent?.trim() || '';
+      const title     = linkEl ? linkEl.textContent.trim() : cells[1]?.textContent?.trim() || '';
+      const category  = cells[2]?.textContent?.trim() || '';
+
+      if (!title) return;
+
+      const date = normalizeDate(dateText);
+      if (cutoff && new Date(date) < cutoff) return;
+
+      results.push({ id, ticker, title, date, category, url: `${CONFIG.kap.base}${href}`, raw: {}, summary: null, signal: null, impact: null, processed: false });
+    });
+
+    return results;
+  }
+
+  // -------------------------------------------------------
+  // Fetch full text of a single disclosure
+  // -------------------------------------------------------
+  async function fetchDisclosureDetail(url) {
+    try {
+      const html = await CorsProxy.getText(url);
+      const doc  = new DOMParser().parseFromString(html, 'text/html');
+
+      // KAP detail page main content selectors
+      let text = '';
+      const content = doc.querySelector('.sub-page-content, .disclosure-content, #bildirim-icerik, .icerik, main article');
+      if (content) {
+        text = content.innerText || content.textContent || '';
+      } else {
+        // Fallback: strip all tags
+        text = doc.body?.textContent || '';
+      }
+
+      // Also grab attachment links
+      const attachments = [];
+      doc.querySelectorAll('a[href*=".pdf"], a[href*="ek="], a[href*="/Ek/"]').forEach(a => {
+        const href = a.getAttribute('href') || '';
+        const fullHref = href.startsWith('http') ? href : CONFIG.kap.base + href;
+        attachments.push({ name: a.textContent.trim(), url: fullHref });
+      });
+
+      return {
+        text:        text.replace(/\s+/g, ' ').trim().slice(0, 8000),
+        attachments,
+      };
+    } catch (err) {
+      console.warn('Bildirim detay alınamadı:', err.message);
+      return { text: '', attachments: [] };
+    }
+  }
+
+  // -------------------------------------------------------
+  // Filter disclosures by our target categories
+  // -------------------------------------------------------
+  function isTargetCategory(disclosure) {
+    const cat   = (disclosure.category || '').toLowerCase();
+    const title = (disclosure.title   || '').toLowerCase();
+    const targets = [
+      'özel durum', 'faaliyet raporu', 'finansal rapor', 'finansal sonuç',
+      'sermaye artırım', 'borçlan', 'yatırım', 'teşvik', 'sözleşme',
+      'sipariş', 'iş ilişki', 'capex', 'kredi', 'tahvil', 'bono',
+      'lisans', 'anlaşma', 'ihraç',
+    ];
+    return targets.some(t => cat.includes(t) || title.includes(t));
+  }
+
+  // -------------------------------------------------------
+  // Financial data: quarterly balance sheet from KAP
+  // Returns { revenue, netIncome, equity, totalAssets, debt, cash, ebit, taxRate } per quarter
+  // -------------------------------------------------------
+  async function fetchFinancials(ticker) {
+    const slug = TICKER_TO_MKK[ticker] || ticker.toLowerCase();
+    // KAP XBRL/HTML financial page
+    const url  = `${CONFIG.kap.financials}/${slug}`;
+
+    try {
+      const html = await CorsProxy.getText(url);
+      return parseFinancialHTML(html, ticker);
+    } catch (err) {
+      console.warn(`Finansal veri alınamadı (${ticker}):`, err.message);
+      return [];
+    }
+  }
+
+  function parseFinancialHTML(html, ticker) {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const quarters = [];
+
+    // KAP financial page contains tables with period headers like "2024/3", "2024/6" etc.
+    const tables = doc.querySelectorAll('table');
+    if (!tables.length) return quarters;
+
+    // Look for balance sheet + income statement tables
+    let balanceTable = null, incomeTable = null;
+    tables.forEach(t => {
+      const header = t.textContent.toLowerCase();
+      if (header.includes('özkaynak') || header.includes('equity')) balanceTable = t;
+      if (header.includes('net dönem') || header.includes('satış')) incomeTable = t;
+    });
+
+    const extractRows = (table) => {
+      const rows = {};
+      table?.querySelectorAll('tr').forEach(tr => {
+        const cells = tr.querySelectorAll('td, th');
+        if (cells.length < 2) return;
+        const label = cells[0].textContent.trim().toLowerCase();
+        const values = [];
+        for (let i = 1; i < cells.length; i++) {
+          values.push(parseTRNumber(cells[i].textContent));
+        }
+        rows[label] = values;
+      });
+      return rows;
+    };
+
+    // Extract period headers (columns)
+    const headerRow = (balanceTable || incomeTable)?.querySelector('tr:first-child');
+    const periods   = [];
+    headerRow?.querySelectorAll('th, td').forEach((th, i) => {
+      if (i === 0) return;
+      const txt = th.textContent.trim();
+      if (txt.match(/\d{4}/)) periods.push(txt);
+    });
+
+    const bRows = extractRows(balanceTable);
+    const iRows = extractRows(incomeTable);
+
+    const findKey = (rows, keys) => {
+      for (const k of keys) {
+        const found = Object.keys(rows).find(r => r.includes(k));
+        if (found) return rows[found];
+      }
+      return [];
+    };
+
+    const equityArr   = findKey(bRows, ['özkaynak', 'toplam özkaynaklar']);
+    const debtSTArr   = findKey(bRows, ['kısa vadeli borçlanmalar', 'kısa vadeli finansal']);
+    const debtLTArr   = findKey(bRows, ['uzun vadeli borçlanmalar', 'uzun vadeli finansal']);
+    const cashArr     = findKey(bRows, ['nakit', 'nakit ve nakit benzeri']);
+    const assetsArr   = findKey(bRows, ['toplam varlıklar', 'toplam aktif']);
+    const netIncArr   = findKey(iRows, ['net dönem kârı', 'dönem net kâr', 'dönem net kar']);
+    const revenueArr  = findKey(iRows, ['satış gelirleri', 'hasılat', 'net satışlar']);
+    const ebitArr     = findKey(iRows, ['esas faaliyetlerden kâr', 'esas faaliyet kâr', 'faaliyet kârı']);
+    const taxArr      = findKey(iRows, ['vergi giderleri', 'gelir vergisi', 'vergi']);
+
+    periods.forEach((period, i) => {
+      const equity     = equityArr[i]   ?? null;
+      const debtST     = debtSTArr[i]   ?? 0;
+      const debtLT     = debtLTArr[i]   ?? 0;
+      const cash       = cashArr[i]     ?? 0;
+      const assets     = assetsArr[i]   ?? null;
+      const netIncome  = netIncArr[i]   ?? null;
+      const revenue    = revenueArr[i]  ?? null;
+      const ebit       = ebitArr[i]     ?? null;
+      const taxExpense = taxArr[i]      ?? null;
+
+      const preTax = ebit !== null && taxExpense !== null
+        ? ebit : null;
+      const taxRate = preTax && taxExpense
+        ? Math.abs(taxExpense) / Math.abs(preTax) : 0.22; // 22% default Turkish CIT
+
+      quarters.push({
+        key:       `${ticker}_${period.replace('/', '_')}`,
+        ticker,
+        period,    // e.g. "2024/3"
+        equity,
+        debt:      (debtST || 0) + (debtLT || 0),
+        cash,
+        assets,
+        netIncome,
+        revenue,
+        ebit,
+        taxRate,
+        rawDebtST: debtST,
+        rawDebtLT: debtLT,
+      });
+    });
+
+    return quarters;
+  }
+
+  function parseTRNumber(txt) {
+    const clean = (txt || '').replace(/\./g, '').replace(',', '.').replace(/[^\d.\-]/g, '');
+    const n = parseFloat(clean);
+    return isNaN(n) ? null : n;
+  }
+
+  return {
+    fetchDisclosureList,
+    fetchDisclosureDetail,
+    fetchFinancials,
+    isTargetCategory,
+    normalizeDate,
+  };
+})();
+
+</script>
+<script>
+// ============================================================
+// BIST Tracker — Gemini API Integration
+// ============================================================
+
+const GeminiAPI = (() => {
+
+  // Use user-set key if available, otherwise fall back to default
+  function getKey() { return Store.getApiKey() || (typeof _K !== 'undefined' ? _K : ''); }
+
+  // -------------------------------------------------------
+  // Summarize a KAP disclosure text
+  // Returns structured JSON summary
+  // -------------------------------------------------------
+  async function summarizeDisclosure(disclosure, fullText) {
+    const key = getKey();
+    if (!key) {
+      return { error: 'API key yok', rawText: fullText.slice(0, 500) };
+    }
+
+    const prompt = `
+Sen profesyonel bir BIST yatırım analistisin. Aşağıdaki KAP bildirimine göre yapılandırılmış bir analiz üret.
+
+Hisse: ${disclosure.ticker}
+Bildirim Kategorisi: ${disclosure.category}
+Başlık: ${disclosure.title}
+Tarih: ${disclosure.date}
+URL: ${disclosure.url}
+
+--- BİLDİRİM METNİ ---
+${fullText.slice(0, 5000)}
+--- METİN SONU ---
+
+Yanıtını YALNIZCA aşağıdaki JSON formatında ver (başka hiçbir şey yazma):
+
+{
+  "category_label": "Bildirim kategorisi (örn: 'Yeni İş İlişkisi/Sözleşme', 'Lisans & Anlaşma', 'Finansal Rapor', 'Sermaye Artırımı', 'CapEx Yatırım', 'Borçlanma', 'Teşvik')",
+  "headline": "Kısa, çarpıcı başlık (max 12 kelime)",
+  "summary": "3-5 cümle özet: taraflar, işin konusu, rakamsal büyüklükler, süre, lokasyon. SADECE metinde geçen somut bilgileri yaz, varsayım yapma.",
+  "positive": "🟢 Olumlu Taraf: Finansal/operasyonel kazanım — nakit akışı, marj, pazar payı etkisi. Rakam varsa yaz, yoksa 'Veri yok' de.",
+  "negative": "🔴 Olumsuz Yön/Risk: Kur riski, sektörel risk, maliyet riski, uygulama riski, iç/global piyasa riski.",
+  "signal": "Pozitif | Negatif | Nötr",
+  "impact_score": 7,
+  "roe_effect": "Tahmini bps (örn: +50bps) veya 'Belirsiz'",
+  "roic_effect": "Tahmini bps veya 'Belirsiz'",
+  "wacc_effect": "Tahmini bps veya 'Belirsiz'",
+  "eva_direction": "Pozitif | Negatif | Nötr | Belirsiz",
+  "key_numbers": ["rakam1", "rakam2"]
+}
+
+Kurallar:
+- SADECE metinde geçen somut rakamlara, isimlere, maddi kazanım/kayıp bilgilerine dayan.
+- Rakam yoksa "Veri yok" yaz, uydurma.
+- impact_score 1-10 arası integer.
+- Profesyonel yatırımcı diliyle, abartısız.
+`;
+
+    try {
+      const endpoint = `${CONFIG.gemini.endpoint}/${CONFIG.gemini.model}:generateContent?key=${key}`;
+      const body = {
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.1,
+          topP: 0.8,
+          maxOutputTokens: 1024,
+          responseMimeType: 'application/json',
+        },
+      };
+
+      const resp = await fetch(endpoint, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `HTTP ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+      // Parse JSON from Gemini response
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('JSON parse edilemedi');
+      return JSON.parse(jsonMatch[0]);
+
+    } catch (err) {
+      console.error('Gemini hata:', err.message);
+      return {
+        category_label: disclosure.category || 'Bilinmiyor',
+        headline: disclosure.title,
+        summary: `Özet oluşturulamadı: ${err.message}`,
+        positive: 'Veri yok',
+        negative: 'Veri yok',
+        signal: 'Nötr',
+        impact_score: 0,
+        roe_effect: 'Belirsiz',
+        roic_effect: 'Belirsiz',
+        wacc_effect: 'Belirsiz',
+        eva_direction: 'Belirsiz',
+        key_numbers: [],
+        error: err.message,
+      };
+    }
+  }
+
+  // -------------------------------------------------------
+  // Test API key validity
+  // -------------------------------------------------------
+  async function testKey(key) {
+    try {
+      const endpoint = `${CONFIG.gemini.endpoint}/${CONFIG.gemini.model}:generateContent?key=${key}`;
+      const resp = await fetch(endpoint, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          contents: [{ parts: [{ text: 'Merhaba, kısa bir test.' }] }],
+          generationConfig: { maxOutputTokens: 10 },
+        }),
+      });
+      return resp.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  return { summarizeDisclosure, testKey };
+})();
+
+</script>
+<script>
+// ============================================================
+// BIST Tracker — Financial Calculations (ROE / ROIC / WACC / EVA)
+// ============================================================
+
+const FinancialCalc = (() => {
+
+  // Risk-free rate — Turkish 10Y gov bond (fetched or last known)
+  let rfRate = 0.30; // Default ~30% (2024 Turkey 10Y)
+
+  // Try to fetch latest TCMB rate from public data
+  async function fetchRiskFreeRate() {
+    try {
+      // Use investing.com or a free source for TR 10Y yield
+      // Since we can't reliably get this, we use a reasonable approximation
+      // TCMB policy rate as proxy (updated manually from config)
+      rfRate = Store.lsGet('rf_rate', 0.30);
+    } catch { /* use default */ }
+    return rfRate;
+  }
+
+  // Market risk premium (Turkey historical average ~5.5-6%)
+  const MRP = 0.055;
+
+  // -------------------------------------------------------
+  // Compute quarterly metrics for all stored quarters
+  // Returns { ticker, period, roe, roic, wacc, eva, nopat, ic, hasData }
+  // -------------------------------------------------------
+  function computeMetrics(quarters) {
+    // Sort by period
+    const sorted = [...quarters].sort((a, b) => periodToDate(a.period) - periodToDate(b.period));
+
+    const results = [];
+
+    for (let i = 0; i < sorted.length; i++) {
+      const q     = sorted[i];
+      const prev  = sorted[i - 1]; // previous quarter for averages
+
+      const roe   = calcROE(q, prev);
+      const roic  = calcROIC(q);
+      const wacc  = calcWACC(q);
+      const eva   = calcEVA(q, roic, wacc);
+
+      results.push({
+        ticker:   q.ticker,
+        period:   q.period,
+        roe:      roe !== null ? +(roe * 100).toFixed(2)  : null,
+        roic:     roic !== null ? +(roic * 100).toFixed(2) : null,
+        wacc:     wacc !== null ? +(wacc * 100).toFixed(2) : null,
+        eva:      eva,
+        hasData:  roe !== null || roic !== null,
+      });
+    }
+
+    return results;
+  }
+
+  // -------------------------------------------------------
+  // ROE = Net Income (TTM or quarterly annualized) / Average Equity
+  // -------------------------------------------------------
+  function calcROE(q, prev) {
+    if (q.netIncome === null || q.equity === null) return null;
+    if (q.equity === 0) return null;
+
+    const avgEquity = prev?.equity
+      ? (q.equity + prev.equity) / 2
+      : q.equity;
+
+    // Annualize quarterly net income (×4)
+    const annualNI = q.netIncome * 4;
+    return annualNI / avgEquity;
+  }
+
+  // -------------------------------------------------------
+  // ROIC = NOPAT / Invested Capital
+  // NOPAT = EBIT × (1 − Tax Rate)
+  // Invested Capital = Equity + Net Debt
+  // -------------------------------------------------------
+  function calcROIC(q) {
+    if (q.ebit === null || q.equity === null) return null;
+
+    const taxRate = q.taxRate ?? 0.22;
+    const nopat   = q.ebit * (1 - taxRate) * 4; // annualized
+
+    const netDebt = (q.debt || 0) - (q.cash || 0);
+    const ic      = q.equity + netDebt;
+
+    if (ic <= 0) return null;
+    return nopat / ic;
+  }
+
+  // -------------------------------------------------------
+  // WACC = E/V × Ke + D/V × Kd × (1−T)
+  // Ke = Rf + β × MRP  (β ≈ from stock characteristics)
+  // Kd = interest expense / average debt (approximated)
+  // -------------------------------------------------------
+  function calcWACC(q) {
+    if (q.equity === null) return null;
+
+    const E = q.equity;
+    const D = q.debt || 0;
+    const V = E + D;
+    if (V <= 0) return null;
+
+    // Sector-based beta approximation
+    const beta = getSectorBeta(q.ticker);
+    const Ke   = rfRate + beta * MRP;
+
+    // Debt cost: use approximation if not available
+    // In absence of interest expense, use policy rate × 1.2 as proxy
+    const Kd = Store.lsGet(`kd_${q.ticker}`, rfRate * 1.2 / 100) || rfRate * 0.8;
+
+    const T    = q.taxRate ?? 0.22;
+    const wacc = (E / V) * Ke + (D / V) * Kd * (1 - T);
+    return wacc;
+  }
+
+  // -------------------------------------------------------
+  // EVA = NOPAT − WACC × Invested Capital
+  // -------------------------------------------------------
+  function calcEVA(q, roicPct, waccPct) {
+    if (roicPct === null || waccPct === null) return null;
+    if (q.equity === null) return null;
+
+    const netDebt = (q.debt || 0) - (q.cash || 0);
+    const ic      = q.equity + netDebt;
+    if (ic <= 0) return null;
+
+    const spread = (roicPct - waccPct) / 100; // convert from % back to decimal
+    return +(spread * ic).toFixed(0); // in same unit as financials (TL thousands)
+  }
+
+  // -------------------------------------------------------
+  // Sector beta table (BIST estimates)
+  // -------------------------------------------------------
+  function getSectorBeta(ticker) {
+    const betas = {
+      EGEEN: 0.95, FROTO: 1.05, CLEBI: 1.20,
+      BRSAN: 0.90, CCOLA: 0.75, PGSUS: 1.30,
+      OTKAR: 1.10, ISMEN: 1.00, ANSGR: 0.80,
+      LOGO:  1.15, LKMNH: 0.85, ALKA:  0.90,
+      ALTNY: 1.10, SODSN: 0.85,
+    };
+    return betas[ticker] || 1.0;
+  }
+
+  // -------------------------------------------------------
+  // Period "2024/3" → Date for sorting
+  // -------------------------------------------------------
+  function periodToDate(period) {
+    if (!period) return 0;
+    const [year, month] = period.split('/').map(Number);
+    return new Date(year, (month || 3) - 1, 1).getTime();
+  }
+
+  // -------------------------------------------------------
+  // Generate last N quarter labels from today (for empty state)
+  // -------------------------------------------------------
+  function generateQuarterLabels(n = 20) {
+    const labels = [];
+    let d = new Date();
+    // Start from current quarter
+    for (let i = 0; i < n; i++) {
+      const year  = d.getFullYear();
+      const month = d.getMonth() + 1;
+      const q     = month <= 3 ? 3 : month <= 6 ? 6 : month <= 9 ? 9 : 12;
+      labels.unshift(`${year}/${q}`);
+      d.setMonth(d.getMonth() - 3);
+    }
+    return labels;
+  }
+
+  // -------------------------------------------------------
+  // Color scale for heatmap (value normalized 0–1)
+  // -------------------------------------------------------
+  function metricToColor(value, metric, isEstimate = false) {
+    if (value === null || value === undefined) return 'rgba(255,255,255,0.05)';
+
+    let low, high;
+    switch (metric) {
+      case 'ROE':  low = 0;   high = 40;  break;
+      case 'ROIC': low = 0;   high = 30;  break;
+      case 'WACC': low = 15;  high = 40;  break; // WACC: lower is better
+      case 'EVA':  low = -1e6; high = 1e6; break;
+      default:     low = 0;   high = 100;
+    }
+
+    let t = (value - low) / (high - low);
+    t = Math.max(0, Math.min(1, t));
+
+    // For WACC: invert (lower = better = green)
+    if (metric === 'WACC') t = 1 - t;
+
+    // For EVA: center at 0
+    if (metric === 'EVA') t = t; // already 0-1 centered
+
+    const alpha = isEstimate ? 0.6 : 0.85;
+
+    // Red → Yellow → Green
+    if (t < 0.5) {
+      const r = 220;
+      const g = Math.round(t * 2 * 200);
+      return `rgba(${r},${g},40,${alpha})`;
+    } else {
+      const r = Math.round((1 - t) * 2 * 220);
+      const g = 200;
+      return `rgba(${r},${g},40,${alpha})`;
+    }
+  }
+
+  return {
+    computeMetrics,
+    calcROE, calcROIC, calcWACC, calcEVA,
+    generateQuarterLabels,
+    metricToColor,
+    fetchRiskFreeRate,
+    periodToDate,
+    getSectorBeta,
+  };
+})();
+
+</script>
+<script>
+// ============================================================
+// BIST Tracker — Heatmap Renderer
+// ============================================================
+
+const Heatmap = (() => {
+  let currentMetric = 'ROE';
+  let currentData   = {};   // { ticker: [ { period, roe, roic, wacc, eva } ] }
+  let tooltip       = null;
+
+  // -------------------------------------------------------
+  // Mount heatmap into #heatmap-container
+  // -------------------------------------------------------
+  function mount(container) {
+    container.innerHTML = '';
+    tooltip = document.createElement('div');
+    tooltip.className = 'hm-tooltip';
+    tooltip.style.display = 'none';
+    document.body.appendChild(tooltip);
+  }
+
+  // -------------------------------------------------------
+  // Update with new data
+  // -------------------------------------------------------
+  function update(allMetrics, stocks) {
+    // allMetrics: { TICKER: [ { period, roe, roic, wacc, eva, hasData } ] }
+    currentData = allMetrics;
+
+    const container = document.getElementById('heatmap-container');
+    if (!container) return;
+
+    // Collect all unique periods across all tickers, sorted
+    const periodSet = new Set();
+    Object.values(allMetrics).forEach(arr =>
+      arr.forEach(m => periodSet.add(m.period))
+    );
+    const periods = [...periodSet]
+      .sort((a, b) => FinancialCalc.periodToDate(a) - FinancialCalc.periodToDate(b))
+      .slice(-CONFIG.quarterCount);
+
+    // If no periods yet, generate placeholder labels
+    const displayPeriods = periods.length
+      ? periods
+      : FinancialCalc.generateQuarterLabels(CONFIG.quarterCount);
+
+    renderGrid(container, stocks, displayPeriods, allMetrics);
+  }
+
+  function renderGrid(container, stocks, periods, allMetrics) {
+    container.innerHTML = '';
+
+    // --- Legend ---
+    const legend = document.createElement('div');
+    legend.className = 'hm-legend';
+    legend.innerHTML = `
+      <div class="hm-legend-scale">
+        <span class="hm-legend-label bad">Düşük</span>
+        <div class="hm-legend-gradient"></div>
+        <span class="hm-legend-label good">Yüksek</span>
+      </div>
+      <span class="hm-legend-note">* Yarı saydam = tahmin dönemi</span>
+    `;
+    container.appendChild(legend);
+
+    // --- Scroll wrapper ---
+    const wrapper = document.createElement('div');
+    wrapper.className = 'hm-scroll';
+    container.appendChild(wrapper);
+
+    // --- Table ---
+    const table = document.createElement('table');
+    table.className = 'hm-table';
+
+    // Header row (periods)
+    const thead = document.createElement('thead');
+    const hrow  = document.createElement('tr');
+    hrow.appendChild(th('Hisse', 'hm-th-ticker'));
+    periods.forEach(p => {
+      const cell = th(formatPeriod(p), 'hm-th-period');
+      hrow.appendChild(cell);
+    });
+    thead.appendChild(hrow);
+    table.appendChild(thead);
+
+    // Body rows (stocks)
+    const tbody = document.createElement('tbody');
+    stocks.forEach(stock => {
+      const row     = document.createElement('tr');
+      const metrics = allMetrics[stock.ticker] || [];
+      const metricMap = {};
+      metrics.forEach(m => { metricMap[m.period] = m; });
+
+      // Ticker cell
+      const tickerCell = td('', 'hm-td-ticker');
+      tickerCell.innerHTML = `<span class="hm-ticker">${stock.ticker}</span><span class="hm-sector">${stock.sector}</span>`;
+      row.appendChild(tickerCell);
+
+      // Period cells
+      periods.forEach(p => {
+        const m    = metricMap[p];
+        const cell = td('', 'hm-td-cell');
+
+        if (!m || !m.hasData) {
+          cell.style.background = 'rgba(255,255,255,0.03)';
+          cell.innerHTML = '<span class="hm-no-data">—</span>';
+        } else {
+          const val      = getMetricValue(m, currentMetric);
+          const color    = FinancialCalc.metricToColor(val, currentMetric, m.isEstimate);
+          cell.style.background = color;
+
+          const display  = val !== null ? formatMetricVal(val, currentMetric) : '—';
+          cell.innerHTML = `<span class="hm-cell-val">${display}</span>`;
+
+          // Tooltip on hover
+          cell.addEventListener('mouseenter', e => showTooltip(e, stock, p, m));
+          cell.addEventListener('mouseleave', hideTooltip);
+        }
+
+        row.appendChild(cell);
+      });
+
+      tbody.appendChild(row);
+    });
+
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+  }
+
+  // -------------------------------------------------------
+  // Tooltip
+  // -------------------------------------------------------
+  function showTooltip(e, stock, period, m) {
+    if (!tooltip) return;
+    tooltip.innerHTML = `
+      <div class="tt-header">${stock.ticker} — ${formatPeriod(period)}</div>
+      <div class="tt-row"><span>ROE</span><span>${fmtNull(m.roe, '%')}</span></div>
+      <div class="tt-row"><span>ROIC</span><span>${fmtNull(m.roic, '%')}</span></div>
+      <div class="tt-row"><span>WACC</span><span>${fmtNull(m.wacc, '%')}</span></div>
+      <div class="tt-row"><span>EVA</span><span>${fmtEVA(m.eva)}</span></div>
+      <div class="tt-row"><span>ROIC−WACC</span><span class="${spreadClass(m.roic,m.wacc)}">${fmtSpread(m.roic,m.wacc)}</span></div>
+    `;
+    tooltip.style.display = 'block';
+    positionTooltip(e);
+  }
+
+  function hideTooltip() {
+    if (tooltip) tooltip.style.display = 'none';
+  }
+
+  function positionTooltip(e) {
+    if (!tooltip) return;
+    const x = e.clientX + 12;
+    const y = e.clientY - 10;
+    tooltip.style.left = Math.min(x, window.innerWidth - 240) + 'px';
+    tooltip.style.top  = Math.min(y, window.innerHeight - 200) + 'px';
+  }
+
+  // -------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------
+  function th(text, cls) {
+    const el = document.createElement('th');
+    el.className = cls || '';
+    el.textContent = text;
+    return el;
+  }
+
+  function td(text, cls) {
+    const el = document.createElement('td');
+    el.className = cls || '';
+    if (text) el.textContent = text;
+    return el;
+  }
+
+  function formatPeriod(p) {
+    if (!p) return '';
+    const [year, month] = p.split('/');
+    const qMap = { '3': 'Ç1', '6': 'Ç2', '9': 'Ç3', '12': 'Ç4' };
+    return `${qMap[month] || 'Ç?'}'${String(year).slice(2)}`;
+  }
+
+  function getMetricValue(m, metric) {
+    switch (metric) {
+      case 'ROE':  return m.roe;
+      case 'ROIC': return m.roic;
+      case 'WACC': return m.wacc;
+      case 'EVA':  return m.eva;
+      default:     return null;
+    }
+  }
+
+  function formatMetricVal(val, metric) {
+    if (val === null || val === undefined) return '—';
+    if (metric === 'EVA') return fmtEVA(val);
+    return val.toFixed(1) + '%';
+  }
+
+  function fmtNull(v, suffix = '') {
+    if (v === null || v === undefined) return '—';
+    return v.toFixed(1) + suffix;
+  }
+
+  function fmtEVA(v) {
+    if (v === null || v === undefined) return '—';
+    const abs = Math.abs(v);
+    const sign = v >= 0 ? '+' : '-';
+    if (abs >= 1e9) return `${sign}${(abs/1e9).toFixed(1)}B₺`;
+    if (abs >= 1e6) return `${sign}${(abs/1e6).toFixed(1)}M₺`;
+    if (abs >= 1e3) return `${sign}${(abs/1e3).toFixed(0)}K₺`;
+    return `${sign}${abs.toFixed(0)}₺`;
+  }
+
+  function fmtSpread(roic, wacc) {
+    if (roic === null || wacc === null) return '—';
+    const spread = roic - wacc;
+    return (spread >= 0 ? '+' : '') + spread.toFixed(1) + ' bps';
+  }
+
+  function spreadClass(roic, wacc) {
+    if (roic === null || wacc === null) return '';
+    return roic >= wacc ? 'tt-pos' : 'tt-neg';
+  }
+
+  // -------------------------------------------------------
+  // Public: change active metric
+  // -------------------------------------------------------
+  function setMetric(metric) {
+    currentMetric = metric;
+    Store.setMetric(metric);
+    // App may not be defined during early init — use safe check
+    const stocks = (typeof App !== 'undefined' && App.getStocks) ? App.getStocks() : [];
+    update(currentData, stocks);
+  }
+
+  return { mount, update, setMetric, formatPeriod };
+})();
+
+</script>
+<script>
+// ============================================================
+// BIST Tracker — KAP Panel (Disclosure Cards UI)
+// ============================================================
+
+const KapPanel = (() => {
+  let allDisclosures  = [];
+  let activeFilters   = {};
+  let onNewDisclosure = null;   // callback
+
+  // -------------------------------------------------------
+  // Render filter bar
+  // -------------------------------------------------------
+  function renderFilterBar(container, stocks) {
+    const saved = Store.getFilters();
+
+    container.innerHTML = `
+      <div class="filter-bar" id="filter-bar">
+        <div class="filter-group">
+          <label>Hisse</label>
+          <select id="f-ticker" multiple>
+            <option value="">Tümü</option>
+            ${stocks.map(s => `<option value="${s.ticker}" ${saved.tickers?.includes(s.ticker) ? 'selected' : ''}>${s.ticker}</option>`).join('')}
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Sinyal</label>
+          <div class="filter-chips" id="f-signal">
+            <button class="chip ${!saved.signal ? 'active' : ''}" data-val="">Tümü</button>
+            <button class="chip pos ${saved.signal === 'Pozitif' ? 'active' : ''}" data-val="Pozitif">🟢 Pozitif</button>
+            <button class="chip neu ${saved.signal === 'Nötr' ? 'active' : ''}" data-val="Nötr">🟡 Nötr</button>
+            <button class="chip neg ${saved.signal === 'Negatif' ? 'active' : ''}" data-val="Negatif">🔴 Negatif</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label>KAP Etkisi (min)</label>
+          <input type="range" id="f-impact" min="0" max="10" value="${saved.minImpact ?? 0}" step="1">
+          <span id="f-impact-val">${saved.minImpact ?? 0}</span>
+        </div>
+        <div class="filter-group">
+          <label>Başlangıç Tarihi</label>
+          <input type="date" id="f-from" value="${saved.fromDate || ''}">
+        </div>
+        <div class="filter-group">
+          <label>Kategori</label>
+          <select id="f-category">
+            <option value="">Tümü</option>
+            ${CONFIG.targetCategories.map(c => `<option value="${c}" ${saved.category === c ? 'selected' : ''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <button class="btn-secondary" id="btn-clear-filters">Temizle</button>
+      </div>
+    `;
+
+    // Event listeners
+    const apply = () => {
+      const tickers  = [...document.querySelectorAll('#f-ticker option:checked')]
+        .map(o => o.value).filter(Boolean);
+      const signal   = document.querySelector('#f-signal .chip.active')?.dataset.val || '';
+      const minImp   = parseInt(document.getElementById('f-impact').value) || 0;
+      const fromDate = document.getElementById('f-from').value;
+      const category = document.getElementById('f-category').value;
+
+      activeFilters = { tickers, signal, minImpact: minImp, fromDate, category };
+      Store.setFilters(activeFilters);
+      renderCards();
+    };
+
+    container.querySelectorAll('#f-signal .chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        container.querySelectorAll('#f-signal .chip').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        apply();
+      });
+    });
+
+    document.getElementById('f-ticker').addEventListener('change', apply);
+    document.getElementById('f-from').addEventListener('change', apply);
+    document.getElementById('f-category').addEventListener('change', apply);
+    document.getElementById('f-impact').addEventListener('input', e => {
+      document.getElementById('f-impact-val').textContent = e.target.value;
+      apply();
+    });
+    document.getElementById('btn-clear-filters').addEventListener('click', () => {
+      activeFilters = {};
+      Store.setFilters({});
+      renderFilterBar(container, stocks);
+      renderCards();
+    });
+
+    // Initialize with saved filters
+    activeFilters = saved;
+  }
+
+  // -------------------------------------------------------
+  // Render disclosure cards
+  // -------------------------------------------------------
+  async function renderCards(inject = null) {
+    const container = document.getElementById('kap-cards');
+    if (!container) return;
+
+    // Load from store if not given
+    if (!inject) allDisclosures = await Store.getAllDisclosures();
+    else {
+      // Merge new items
+      inject.forEach(d => {
+        if (!allDisclosures.find(x => x.id === d.id)) allDisclosures.unshift(d);
+      });
+    }
+
+    const filtered = applyFilters(allDisclosures);
+
+    if (!filtered.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <p>Henüz bildirim yok veya filtre sonucu boş.</p>
+          <p>Manuel tarama butonuna tıklayın.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Sort by date desc
+    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    container.innerHTML = '';
+    filtered.forEach(d => {
+      const card = buildCard(d);
+      container.appendChild(card);
+    });
+  }
+
+  function applyFilters(list) {
+    return list.filter(d => {
+      const f = activeFilters;
+      if (f.tickers?.length && !f.tickers.includes(d.ticker)) return false;
+      if (f.signal && d.signal !== f.signal) return false;
+      if (f.minImpact && (d.impact_score ?? 0) < f.minImpact) return false;
+      if (f.fromDate && d.date < f.fromDate) return false;
+      if (f.category && d.category !== f.category) return false;
+      return true;
+    });
+  }
+
+  // -------------------------------------------------------
+  // Build single disclosure card
+  // -------------------------------------------------------
+  function buildCard(d) {
+    const card = document.createElement('div');
+    card.className = `kap-card ${signalClass(d.signal)} ${d.processed ? '' : 'card-loading'}`;
+    card.id = `card-${d.id}`;
+
+    if (!d.processed) {
+      card.innerHTML = `
+        <div class="card-header">
+          <span class="card-ticker">${d.ticker}</span>
+          <span class="card-cat">${d.category || 'Bildirim'}</span>
+          <span class="card-date">${formatDateTR(d.date)}</span>
+        </div>
+        <div class="card-title">${d.title || 'İşleniyor…'}</div>
+        <div class="card-processing">
+          <div class="pulse-ring"></div>
+          <span>Gemini ile analiz ediliyor…</span>
+        </div>
+      `;
+      return card;
+    }
+
+    const s = d.summary_data || {};
+    const impColor = impactColor(s.impact_score);
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-header-left">
+          <span class="card-ticker">${d.ticker}</span>
+          <span class="card-cat">${s.category_label || d.category || 'Bildirim'}</span>
+        </div>
+        <div class="card-header-right">
+          <span class="card-date">${formatDateTR(d.date)}</span>
+          <span class="card-impact" style="background:${impColor}" title="KAP Etkisi">
+            ${s.impact_score ?? '—'}/10
+          </span>
+          <span class="card-signal signal-${signalClass(s.signal || d.signal)}">
+            ${signalIcon(s.signal || d.signal)} ${s.signal || d.signal || '—'}
+          </span>
+        </div>
+      </div>
+
+      <div class="card-headline">${s.headline || d.title}</div>
+
+      <div class="card-summary">${s.summary || 'Özet yok.'}</div>
+
+      <div class="card-detail-grid">
+        <div class="card-detail pos">
+          <div class="card-detail-label">Olumlu Taraf</div>
+          <div>${s.positive || 'Veri yok'}</div>
+        </div>
+        <div class="card-detail neg">
+          <div class="card-detail-label">Olumsuz Yön/Risk</div>
+          <div>${s.negative || 'Veri yok'}</div>
+        </div>
+      </div>
+
+      <div class="card-metrics-row">
+        <div class="card-metric">
+          <span class="cm-label">ROE Etkisi</span>
+          <span class="cm-val">${s.roe_effect || '—'}</span>
+        </div>
+        <div class="card-metric">
+          <span class="cm-label">ROIC Etkisi</span>
+          <span class="cm-val">${s.roic_effect || '—'}</span>
+        </div>
+        <div class="card-metric">
+          <span class="cm-label">WACC Etkisi</span>
+          <span class="cm-val">${s.wacc_effect || '—'}</span>
+        </div>
+        <div class="card-metric">
+          <span class="cm-label">EVA Yönü</span>
+          <span class="cm-val eva-${(s.eva_direction||'').toLowerCase()}">${s.eva_direction || '—'}</span>
+        </div>
+      </div>
+
+      ${s.key_numbers?.length ? `
+        <div class="card-key-numbers">
+          ${s.key_numbers.map(n => `<span class="kn-tag">${n}</span>`).join('')}
+        </div>
+      ` : ''}
+
+      <div class="card-footer">
+        <a href="${d.url}" target="_blank" rel="noopener" class="kap-link">
+          🔗 KAP'ta Görüntüle
+        </a>
+        ${d.attachments?.length ? `
+          <div class="card-attachments">
+            ${d.attachments.slice(0, 3).map(a =>
+              `<a href="${a.url}" target="_blank" class="att-link">📎 ${a.name || 'Ek'}</a>`
+            ).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+
+    return card;
+  }
+
+  // -------------------------------------------------------
+  // Notification for new disclosures
+  // -------------------------------------------------------
+  function notifyNew(count) {
+    // In-app banner
+    const banner = document.getElementById('new-alert-banner');
+    if (banner) {
+      banner.textContent = `🔔 ${count} yeni bildirim geldi!`;
+      banner.classList.add('active');
+      setTimeout(() => banner.classList.remove('active'), 8000);
+    }
+
+    // Browser notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('BIST Tracker', {
+        body:  `${count} yeni KAP bildirimi analiz edildi.`,
+        icon:  'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📊</text></svg>',
+        badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📊</text></svg>',
+      });
+    }
+  }
+
+  // -------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------
+  function signalClass(signal) {
+    if (!signal) return '';
+    if (signal === 'Pozitif') return 'sig-pos';
+    if (signal === 'Negatif') return 'sig-neg';
+    return 'sig-neu';
+  }
+
+  function signalIcon(signal) {
+    if (signal === 'Pozitif') return '🟢';
+    if (signal === 'Negatif') return '🔴';
+    return '🟡';
+  }
+
+  function impactColor(score) {
+    if (!score) return 'rgba(255,255,255,0.15)';
+    if (score >= 8) return 'rgba(0,220,100,0.8)';
+    if (score >= 5) return 'rgba(255,200,0,0.8)';
+    return 'rgba(255,90,90,0.6)';
+  }
+
+  function formatDateTR(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d)) return dateStr;
+    return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  return {
+    renderFilterBar,
+    renderCards,
+    notifyNew,
+    applyFilters,
+    buildCard,
+  };
+})();
+
+</script>
+<script>
+// ============================================================
+// BIST Tracker — Scheduler (09:30 / 16:00 auto-scan)
+// ============================================================
+
+const Scheduler = (() => {
+  let intervalId  = null;
+  let onScanDue   = null;
+  const CHECK_MS  = 30_000; // check every 30 seconds
+
+  // -------------------------------------------------------
+  // Start the scheduler loop
+  // -------------------------------------------------------
+  function start(scanCallback) {
+    if (intervalId) return;
+    onScanDue = scanCallback;
+
+    // Check immediately (catches up missed scans)
+    checkAndFire();
+
+    intervalId = setInterval(checkAndFire, CHECK_MS);
+    console.log('[Scheduler] Başlatıldı — 09:30 ve 16:00 taramaları aktif.');
+  }
+
+  function stop() {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
+
+  function checkAndFire() {
+    const now    = new Date();
+    const hm     = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const today  = now.toISOString().slice(0, 10);
+
+    CONFIG.scheduleTimes.forEach(target => {
+      const key  = `last_scan_${target}`;
+      const last = Store.lsGet(key, null);
+      const lastDate = last ? new Date(last).toISOString().slice(0, 10) : '';
+
+      // Fire if we are AT or PAST the target time AND haven't fired today
+      if (hm >= target && lastDate !== today) {
+        console.log(`[Scheduler] ${target} taraması tetiklendi.`);
+        Store.lsSet(key, Date.now());
+        updateScanStatus();
+        if (onScanDue) onScanDue(`auto_${target}`);
+      }
+    });
+
+    updateScanStatus();
+  }
+
+  // -------------------------------------------------------
+  // Update UI countdown display
+  // -------------------------------------------------------
+  function updateScanStatus() {
+    const el = document.getElementById('scheduler-status');
+    if (!el) return;
+
+    const now  = new Date();
+    const next = getNextScanTime(now);
+    const diff = next - now;
+    const hh   = Math.floor(diff / 3_600_000);
+    const mm   = Math.floor((diff % 3_600_000) / 60_000);
+    const ss   = Math.floor((diff % 60_000) / 1000);
+
+    const last09 = Store.lsGet('last_scan_09:30', null);
+    const last16 = Store.lsGet('last_scan_16:00', null);
+    const fmt    = ts => ts ? new Date(ts).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '—';
+
+    el.innerHTML = `
+      <div class="sched-row">
+        <span class="sched-dot ${isToday(last09) ? 'done' : 'wait'}"></span>
+        <span>09:30 — ${isToday(last09) ? '✓ Tamamlandı ' + fmt(last09) : 'Bekleniyor'}</span>
+      </div>
+      <div class="sched-row">
+        <span class="sched-dot ${isToday(last16) ? 'done' : 'wait'}"></span>
+        <span>16:00 — ${isToday(last16) ? '✓ Tamamlandı ' + fmt(last16) : 'Bekleniyor'}</span>
+      </div>
+      <div class="sched-next">⏱ Sonraki tarama: ${hh}s ${mm}d ${ss}sn</div>
+    `;
+  }
+
+  function getNextScanTime(now) {
+    const today = now.toISOString().slice(0, 10);
+    const times = CONFIG.scheduleTimes.map(t => {
+      const [h, m] = t.split(':').map(Number);
+      const d      = new Date(now);
+      d.setHours(h, m, 0, 0);
+      return d;
+    }).filter(d => d > now || !isToday(Store.lsGet(`last_scan_${CONFIG.scheduleTimes[0]}`, null)));
+
+    if (times.length === 0) {
+      // Next day 09:30
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(9, 30, 0, 0);
+      return tomorrow;
+    }
+
+    const futureScans = times.filter(d => d > now);
+    return futureScans.length ? futureScans[0] : times[times.length - 1];
+  }
+
+  function isToday(ts) {
+    if (!ts) return false;
+    const today = new Date().toISOString().slice(0, 10);
+    return new Date(ts).toISOString().slice(0, 10) === today;
+  }
+
+  // Update UI every second for live countdown
+  function startUILoop() {
+    setInterval(updateScanStatus, 1000);
+  }
+
+  return { start, stop, updateScanStatus, startUILoop };
+})();
+
+</script>
+<script>
+// ============================================================
+// BIST Tracker — Main App Controller (v1.1 — Fixed)
+// ============================================================
+
+const App = (() => {
+  let stocks         = [...CONFIG.stocks];
+  let allMetrics     = {};
+  let scanInProgress = false;
+
+  // -------------------------------------------------------
+  // Boot
+  // -------------------------------------------------------
+  async function init() {
+    try {
+      // Load saved stock list
+      const saved = Store.getStocks();
+      if (Array.isArray(saved) && saved.length) stocks = saved;
+
+      // Request notification permission
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().catch(() => {});
+      }
+
+      // Wire up all UI event listeners
+      setupTabSwitching();
+      setupMetricButtons();
+      setupScanButtons();
+      setupStockManager();
+      setupApiKeyForm();
+
+      // Open IndexedDB early
+      await Store.openDB();
+
+      // Mount heatmap (empty state first)
+      const hmContainer = document.getElementById('heatmap-container');
+      if (hmContainer) Heatmap.mount(hmContainer);
+
+      // Load any stored metrics from previous session
+      await loadStoredMetrics();
+      Heatmap.update(allMetrics, stocks);
+
+      // Render KAP filter bar and any stored cards
+      const filterContainer = document.getElementById('filter-container');
+      if (filterContainer) KapPanel.renderFilterBar(filterContainer, stocks);
+      await KapPanel.renderCards();
+
+      // Update stats immediately
+      updateStats();
+
+      // Initial 6-month KAP scan (one time only)
+      if (!Store.getInitialScanDone()) {
+        showToast('İlk kurulum: 6 aylık KAP geçmişi taranıyor…', 'info', 0);
+        await runScan('initial');
+        Store.setInitialScanDone();
+        hideToast();
+      }
+
+      // Start scheduler (09:30 / 16:00)
+      Scheduler.start(handleScheduledScan);
+      Scheduler.startUILoop();
+
+      // Live clock
+      setInterval(updateClock, 1000);
+      updateClock();
+
+      // If no financial data yet, prompt user (don't auto-fetch — could be slow)
+      if (Object.keys(allMetrics).length === 0) {
+        showToast('💡 Finansal Isı Haritası için "Finansal Verileri Güncelle" butonuna tıklayın.', 'info', 8000);
+      }
+
+    } catch (err) {
+      console.error('[App.init] Kritik hata:', err);
+      showToast('❌ Uygulama yüklenirken hata: ' + err.message, 'error', 0);
+    }
+  }
+
+  // -------------------------------------------------------
+  // Tab switching
+  // -------------------------------------------------------
+  function setupTabSwitching() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const panel = document.getElementById('panel-' + btn.dataset.tab);
+        if (panel) panel.classList.add('active');
+        Store.setActiveTab(btn.dataset.tab);
+      });
+    });
+
+    // Restore last active tab
+    const lastTab = Store.getActiveTab();
+    const tabBtn  = document.querySelector('.tab-btn[data-tab="' + lastTab + '"]');
+    if (tabBtn) tabBtn.click();
+    else {
+      const first = document.querySelector('.tab-btn');
+      if (first) first.click();
+    }
+  }
+
+  // -------------------------------------------------------
+  // Metric selector for heatmap
+  // -------------------------------------------------------
+  function setupMetricButtons() {
+    document.querySelectorAll('.metric-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.metric-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        Heatmap.setMetric(btn.dataset.metric);
+      });
+    });
+
+    const savedMetric = Store.getMetric();
+    const mb = document.querySelector('.metric-btn[data-metric="' + savedMetric + '"]');
+    if (mb) mb.click();
+  }
+
+  // -------------------------------------------------------
+  // Scan buttons
+  // -------------------------------------------------------
+  function setupScanButtons() {
+    document.getElementById('btn-manual-scan')?.addEventListener('click', async () => {
+      if (scanInProgress) { showToast('Tarama zaten devam ediyor…', 'warn'); return; }
+      await runScan('manual');
+    });
+
+    document.getElementById('btn-fetch-financials')?.addEventListener('click', async () => {
+      await fetchAllFinancials();
+    });
+  }
+
+  // -------------------------------------------------------
+  // KAP Scan — main engine
+  // -------------------------------------------------------
+  async function runScan(source) {
+    if (scanInProgress) return;
+    scanInProgress = true;
+
+    const btn = document.getElementById('btn-manual-scan');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Taranıyor…'; }
+
+    const daysBack = source === 'initial' ? CONFIG.initialScanDays : 2;
+    const fromDate = new Date(Date.now() - daysBack * 86_400_000).toISOString().slice(0, 10);
+
+    let newCount = 0;
+
+    for (const stock of stocks) {
+      try {
+        updateScanProgress(stock.ticker + ' bildirimleri alınıyor…');
+
+        const disclosures = await KapAPI.fetchDisclosureList(stock.ticker, fromDate);
+
+        for (const disc of disclosures) {
+          if (!KapAPI.isTargetCategory(disc)) continue;
+          if (await Store.disclosureExists(disc.id)) continue;
+
+          // Save unprocessed placeholder
+          await Store.saveDisclosure({ ...disc, processed: false });
+
+          // Show placeholder card immediately
+          const placeholder = document.getElementById('card-' + disc.id);
+          if (!placeholder) {
+            const cardEl = KapPanel.buildCard({ ...disc, processed: false });
+            const cardsContainer = document.getElementById('kap-cards');
+            if (cardsContainer) {
+              const empty = cardsContainer.querySelector('.empty-state');
+              if (empty) empty.remove();
+              cardsContainer.prepend(cardEl);
+            }
+          }
+
+          // Fetch full disclosure text
+          updateScanProgress(stock.ticker + ': "' + disc.title.slice(0, 35) + '…" işleniyor');
+          const detail = await KapAPI.fetchDisclosureDetail(disc.url);
+
+          // Summarize with Gemini
+          const summary = await GeminiAPI.summarizeDisclosure(disc, detail.text || disc.title);
+
+          // Build complete record
+          const complete = {
+            ...disc,
+            full_text:    detail.text,
+            attachments:  detail.attachments || [],
+            summary_data: summary,
+            signal:       summary.signal || 'Nötr',
+            impact_score: summary.impact_score || 0,
+            processed:    true,
+          };
+
+          await Store.saveDisclosure(complete);
+          newCount++;
+
+          // Replace placeholder card with full card
+          const existing = document.getElementById('card-' + disc.id);
+          if (existing) {
+            const newCard = KapPanel.buildCard(complete);
+            existing.replaceWith(newCard);
+          }
+
+          await sleep(700); // rate-limit
+        }
+      } catch (err) {
+        console.warn(stock.ticker + ' tarama hatası:', err.message);
+        updateScanProgress(stock.ticker + ' atlandı: ' + err.message);
+      }
+    }
+
+    scanInProgress = false;
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Manuel Tara'; }
+    clearScanProgress();
+
+    if (newCount > 0) {
+      KapPanel.notifyNew(newCount);
+      showToast('✅ ' + newCount + ' yeni bildirim eklendi.', 'success');
+      await KapPanel.renderCards();
+    } else {
+      showToast('Yeni bildirim bulunamadı.', 'info');
+    }
+
+    await updateStats();
+    Store.setLastScanTime(source);
+    Scheduler.updateScanStatus();
+  }
+
+  async function handleScheduledScan(period) {
+    showToast('🕐 ' + period + ' otomatik taraması başlıyor…', 'info');
+    await runScan(period);
+  }
+
+  // -------------------------------------------------------
+  // Financial Data Fetch + Metrics
+  // -------------------------------------------------------
+  async function fetchAllFinancials() {
+    if (scanInProgress) { showToast('Önce mevcut tarama tamamlanmalı.', 'warn'); return; }
+
+    const btn = document.getElementById('btn-fetch-financials');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Veriler alınıyor…'; }
+
+    showProgress('Finansal veriler KAP\'tan çekiliyor…', 0);
+
+    let fetchedCount = 0;
+    for (let i = 0; i < stocks.length; i++) {
+      const stock = stocks[i];
+      showProgress(stock.ticker + ' finansal tabloları işleniyor…', Math.round((i / stocks.length) * 100));
+
+      try {
+        const quarters = await KapAPI.fetchFinancials(stock.ticker);
+        for (const q of quarters) {
+          await Store.saveFinancial(q);
+        }
+        if (quarters.length > 0) fetchedCount++;
+      } catch (err) {
+        console.warn(stock.ticker + ' finansal veri hatası:', err.message);
+      }
+
+      await sleep(600);
+    }
+
+    await loadStoredMetrics();
+    Heatmap.update(allMetrics, stocks);
+    hideProgress();
+
+    if (btn) { btn.disabled = false; btn.textContent = '📊 Finansal Verileri Güncelle'; }
+
+    if (fetchedCount > 0) {
+      showToast('✅ ' + fetchedCount + ' hisse için finansal veriler güncellendi.', 'success');
+    } else {
+      showToast('⚠️ KAP\'tan finansal veri çekilemedi. CORS proxy erişimi kontrol edin.', 'warn', 8000);
+    }
+  }
+
+  async function loadStoredMetrics() {
+    allMetrics = {};
+    for (const stock of stocks) {
+      try {
+        const quarters = await Store.getFinancialsByTicker(stock.ticker);
+        allMetrics[stock.ticker] = quarters.length
+          ? FinancialCalc.computeMetrics(quarters)
+          : [];
+      } catch (e) {
+        allMetrics[stock.ticker] = [];
+      }
+    }
+  }
+
+  // -------------------------------------------------------
+  // Stock Manager
+  // -------------------------------------------------------
+  function setupStockManager() {
+    const btnOpen  = document.getElementById('btn-manage-stocks');
+    const modal    = document.getElementById('stock-modal');
+    const btnClose = document.getElementById('btn-close-stock-modal');
+    const btnSave  = document.getElementById('btn-save-stocks');
+
+    if (!btnOpen || !modal) return;
+
+    btnOpen.addEventListener('click', () => {
+      renderStockModal();
+      modal.classList.add('open');
+    });
+
+    btnClose?.addEventListener('click', () => modal.classList.remove('open'));
+    modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
+
+    btnSave?.addEventListener('click', async () => {
+      const checked = [...document.querySelectorAll('.stock-check:checked')].map(cb => cb.value);
+      const addedRaw = (document.getElementById('add-ticker-input')?.value || '').trim().toUpperCase();
+
+      let newList = CONFIG.stocks.filter(s => checked.includes(s.ticker));
+
+      if (addedRaw && addedRaw.length >= 3 && !newList.find(s => s.ticker === addedRaw)) {
+        newList.push({ ticker: addedRaw, name: addedRaw, sector: 'Bilinmiyor' });
+      }
+
+      if (newList.length === 0) {
+        showToast('En az 1 hisse seçilmeli.', 'warn');
+        return;
+      }
+
+      stocks = newList;
+      Store.setStocks(stocks);
+      modal.classList.remove('open');
+
+      const filterContainer = document.getElementById('filter-container');
+      if (filterContainer) KapPanel.renderFilterBar(filterContainer, stocks);
+      await KapPanel.renderCards();
+      await loadStoredMetrics();
+      Heatmap.update(allMetrics, stocks);
+      showToast('Hisse listesi güncellendi.', 'success');
+    });
+  }
+
+  function renderStockModal() {
+    const list = document.getElementById('stock-check-list');
+    if (!list) return;
+    list.innerHTML = CONFIG.stocks.map(s => `
+      <label class="stock-check-item">
+        <input type="checkbox" class="stock-check" value="${s.ticker}"
+          ${stocks.find(x => x.ticker === s.ticker) ? 'checked' : ''}>
+        <span class="stk-ticker">${s.ticker}</span>
+        <span class="stk-name">${s.name}</span>
+        <span class="stk-sector">${s.sector}</span>
+      </label>
+    `).join('');
+  }
+
+  // -------------------------------------------------------
+  // API Key form (wires up even if section is hidden)
+  // -------------------------------------------------------
+  function setupApiKeyForm() {
+    const input = document.getElementById('gemini-key-input');
+    const btn   = document.getElementById('btn-save-key');
+    const test  = document.getElementById('btn-test-key');
+    if (!input) return;
+
+    const saved = Store.getApiKey();
+    if (saved) input.value = saved.slice(0, 4) + '****';
+
+    input.addEventListener('focus', () => {
+      const k = Store.getApiKey();
+      if (k) input.value = k;
+    });
+
+    btn?.addEventListener('click', () => {
+      const key = input.value.trim();
+      if (!key || key.includes('*')) return;
+      Store.setApiKey(key);
+      input.value = key.slice(0, 4) + '****';
+      showToast('API key kaydedildi.', 'success');
+    });
+
+    test?.addEventListener('click', async () => {
+      test.textContent = '⏳';
+      const ok = await GeminiAPI.testKey(Store.getApiKey() || (typeof _K !== 'undefined' ? _K : ''));
+      test.textContent = '🧪 Test Et';
+      showToast(ok ? '✅ API key geçerli!' : '❌ API key geçersiz.', ok ? 'success' : 'error');
+    });
+  }
+
+  // -------------------------------------------------------
+  // Stats updater
+  // -------------------------------------------------------
+  async function updateStats() {
+    try {
+      const all   = await Store.getAllDisclosures();
+      const pos   = all.filter(d => d.signal === 'Pozitif').length;
+      const neg   = all.filter(d => d.signal === 'Negatif').length;
+      const high  = all.filter(d => (d.impact_score || 0) >= 7).length;
+      const el = id => document.getElementById(id);
+      if (el('stat-total')) el('stat-total').textContent = all.length;
+      if (el('stat-pos'))   el('stat-pos').textContent   = pos;
+      if (el('stat-neg'))   el('stat-neg').textContent   = neg;
+      if (el('stat-high'))  el('stat-high').textContent  = high;
+    } catch (e) { /* ignore */ }
+  }
+
+  // -------------------------------------------------------
+  // Data management (called from settings HTML)
+  // -------------------------------------------------------
+  async function clearKapData() {
+    if (!confirm('KAP bildirimleri silinsin mi?')) return;
+    await Store.clearDisclosures();
+    Store.lsDel('initial_scan_done');
+    await KapPanel.renderCards();
+    await updateStats();
+    showToast('KAP verileri temizlendi.', 'info');
+  }
+
+  async function clearFinancialData() {
+    if (!confirm('Finansal veriler silinsin mi?')) return;
+    await Store.clearFinancials();
+    allMetrics = {};
+    Heatmap.update(allMetrics, stocks);
+    showToast('Finansal veriler temizlendi.', 'info');
+  }
+
+  async function resetAll() {
+    if (!confirm('TÜM veriler silinsin mi? Bu işlem geri alınamaz.')) return;
+    await Store.clearDisclosures();
+    await Store.clearFinancials();
+    Store.lsDel('initial_scan_done');
+    localStorage.clear();
+    location.reload();
+  }
+
+  // -------------------------------------------------------
+  // UI helpers
+  // -------------------------------------------------------
+  function updateClock() {
+    const el = document.getElementById('live-clock');
+    if (!el) return;
+    const now = new Date();
+    el.textContent =
+      now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) +
+      ' — ' +
+      now.toLocaleDateString('tr-TR', { weekday: 'short', day: '2-digit', month: 'short' });
+  }
+
+  function updateScanProgress(msg) {
+    const el = document.getElementById('scan-progress-text');
+    if (el) el.textContent = msg;
+  }
+
+  function clearScanProgress() {
+    const el = document.getElementById('scan-progress-text');
+    if (el) el.textContent = '';
+  }
+
+  function showProgress(msg, pct) {
+    const wrap = document.getElementById('progress-bar-wrap');
+    const bar  = document.getElementById('progress-bar-inner');
+    const txt  = document.getElementById('progress-bar-text');
+    if (wrap) wrap.style.display = 'flex';
+    if (bar)  bar.style.width    = pct + '%';
+    if (txt)  txt.textContent    = msg;
+  }
+
+  function hideProgress() {
+    const wrap = document.getElementById('progress-bar-wrap');
+    if (wrap) wrap.style.display = 'none';
+  }
+
+  let _toastTimer = null;
+  function showToast(msg, type, duration) {
+    type     = type     || 'info';
+    duration = (duration === undefined) ? 4000 : duration;
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.className   = 'toast toast-' + type + ' active';
+    if (_toastTimer) clearTimeout(_toastTimer);
+    if (duration > 0) _toastTimer = setTimeout(() => el.classList.remove('active'), duration);
+  }
+
+  function hideToast() {
+    const el = document.getElementById('toast');
+    if (el) el.classList.remove('active');
+    if (_toastTimer) clearTimeout(_toastTimer);
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  function getStocks() { return stocks; }
+
+  // -------------------------------------------------------
+  // Public API
+  // -------------------------------------------------------
+  return {
+    init,
+    getStocks,
+    runScan,
+    fetchAllFinancials,
+    showToast,
+    hideToast,
+    updateStats,
+    clearKapData,
+    clearFinancialData,
+    resetAll,
+  };
+})();
+
+// Boot
+document.addEventListener('DOMContentLoaded', () => App.init());
+
+</script>
 
 <!-- Extra wiring for settings panel -->
 <script>
@@ -362,3 +3683,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
