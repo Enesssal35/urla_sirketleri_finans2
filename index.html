@@ -1746,7 +1746,7 @@ const Store = (() => {
 
 const CorsProxy = (() => {
   let currentProxyIdx = 0;
-  const proxies = CONFIG.corsProxies;
+  const proxies = [CONFIG.corsProxies[0]];
 
   async function fetchViaProxy(url, opts = {}, proxyIdx = currentProxyIdx) {
     if (proxyIdx >= proxies.length) {
@@ -1754,7 +1754,7 @@ const CorsProxy = (() => {
     }
 
     const proxy   = proxies[proxyIdx];
-    const fullUrl = proxy + encodeURIComponent(url);
+    const fullUrl = proxy === '' ? url : proxy + encodeURIComponent(url);
 
     try {
       const resp = await fetch(fullUrl, {
@@ -3683,6 +3683,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
+
+
 
 
 
